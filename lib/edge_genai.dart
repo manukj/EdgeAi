@@ -1,11 +1,13 @@
 
 import 'edge_genai_availability.dart';
 import 'edge_genai_download_progress.dart';
+import 'edge_genai_generation_options.dart';
 import 'edge_genai_platform_interface.dart';
 
 export 'edge_genai_availability.dart' show EdgeGenaiAvailability;
 export 'edge_genai_download_progress.dart'
     show EdgeGenaiDownloadProgress, EdgeGenaiDownloadStatus;
+export 'edge_genai_generation_options.dart' show EdgeGenaiGenerationOptions;
 
 class EdgeGenai {
   /// Checks whether the on-device generative AI model is available.
@@ -25,9 +27,17 @@ class EdgeGenai {
     return EdgeGenaiPlatform.instance.downloadModel();
   }
 
-  /// Sends [prompt] to the on-device model and returns its generated text
-  /// response.
-  Future<String> generateContent(String prompt) {
-    return EdgeGenaiPlatform.instance.generateContent(prompt);
+  /// Sends [prompt] to the on-device model and streams its generated text.
+  ///
+  /// Each event is the full response text generated so far, not just the
+  /// newly-added chunk, so UI code can simply display the latest event.
+  Stream<String> generateContent(
+    String prompt, {
+    EdgeGenaiGenerationOptions? options,
+  }) {
+    return EdgeGenaiPlatform.instance.generateContent(
+      prompt,
+      options: options,
+    );
   }
 }

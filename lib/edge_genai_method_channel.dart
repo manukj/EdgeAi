@@ -18,7 +18,11 @@ class MethodChannelEdgeGenai extends EdgeGenaiPlatform {
   }
 
   @override
-  Future<String> generateContent(String prompt) {
-    return hostApi.generateContent(prompt);
+  Stream<String> generateContent(
+    String prompt, {
+    EdgeGenaiGenerationOptions? options,
+  }) async* {
+    await hostApi.startGenerateContent(prompt, options);
+    yield* generateContentChunk();
   }
 }

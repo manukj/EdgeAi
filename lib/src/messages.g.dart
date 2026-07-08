@@ -122,6 +122,62 @@ enum EdgeGenaiDownloadStatus {
   completed,
 }
 
+/// Optional parameters controlling how the model generates its response.
+///
+/// Only fields supported by both Android and iOS are exposed here.
+class EdgeGenaiGenerationOptions {
+  EdgeGenaiGenerationOptions({
+    this.temperature,
+    this.maxOutputTokens,
+  });
+
+  /// Controls the randomness of the output. Higher values produce more
+  /// creative (less predictable) responses.
+  double? temperature;
+
+  /// The maximum number of tokens the model may generate in its response.
+  int? maxOutputTokens;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      temperature,
+      maxOutputTokens,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static EdgeGenaiGenerationOptions decode(Object result) {
+    result as List<Object?>;
+    return EdgeGenaiGenerationOptions(
+      temperature: result[0] as double?,
+      maxOutputTokens: result[1] as int?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! EdgeGenaiGenerationOptions || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(temperature, other.temperature) && _deepEquals(maxOutputTokens, other.maxOutputTokens);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'EdgeGenaiGenerationOptions(temperature: $temperature, maxOutputTokens: $maxOutputTokens)';
+  }
+}
+
 /// A single download progress update.
 class EdgeGenaiDownloadProgress {
   EdgeGenaiDownloadProgress({
@@ -190,8 +246,11 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is EdgeGenaiDownloadStatus) {
       buffer.putUint8(130);
       writeValue(buffer, value.index);
-    }    else if (value is EdgeGenaiDownloadProgress) {
+    }    else if (value is EdgeGenaiGenerationOptions) {
       buffer.putUint8(131);
+      writeValue(buffer, value.encode());
+    }    else if (value is EdgeGenaiDownloadProgress) {
+      buffer.putUint8(132);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -208,6 +267,8 @@ class _PigeonCodec extends StandardMessageCodec {
         final value = readValue(buffer) as int?;
         return value == null ? null : EdgeGenaiDownloadStatus.values[value];
       case 131:
+        return EdgeGenaiGenerationOptions.decode(readValue(buffer)!);
+      case 132:
         return EdgeGenaiDownloadProgress.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -249,25 +310,27 @@ class EdgeGenaiHostApi {
     return pigeonVar_replyValue! as EdgeGenaiAvailability;
   }
 
-  /// Sends [prompt] to the on-device model and returns its generated text
-  /// response.
-  Future<String> generateContent(String prompt) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.generateContent$pigeonVar_messageChannelSuffix';
+  /// Stores [prompt] and [options] for the next `generateContentChunk` event
+  /// channel subscription to use.
+  ///
+  /// Event channels can't carry parameters, so callers must invoke this
+  /// immediately before listening to the `generateContentChunk` stream.
+  Future<void> startGenerateContent(String prompt, EdgeGenaiGenerationOptions? options) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.startGenerateContent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[prompt]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[prompt, options]);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
-    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+    _extractReplyValueOrThrow(
         pigeonVar_replyList,
         pigeonVar_channelName,
-        isNullValid: false,
+        isNullValid: true,
     )
     ;
-    return pigeonVar_replyValue! as String;
   }
 }
 
@@ -276,9 +339,20 @@ Stream<EdgeGenaiDownloadProgress> downloadProgress( {String instanceName = ''}) 
     instanceName = '.$instanceName';
   }
   final EventChannel downloadProgressChannel =
-      EventChannel('dev.flutter.pigeon.edge_genai.EdgeGenaiDownloadEventApi.downloadProgress$instanceName', pigeonMethodCodec);
+      EventChannel('dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.downloadProgress$instanceName', pigeonMethodCodec);
   return downloadProgressChannel.receiveBroadcastStream().map((dynamic event) {
     return event as EdgeGenaiDownloadProgress;
+  });
+}
+    
+Stream<String> generateContentChunk( {String instanceName = ''}) {
+  if (instanceName.isNotEmpty) {
+    instanceName = '.$instanceName';
+  }
+  final EventChannel generateContentChunkChannel =
+      EventChannel('dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.generateContentChunk$instanceName', pigeonMethodCodec);
+  return generateContentChunkChannel.receiveBroadcastStream().map((dynamic event) {
+    return event as String;
   });
 }
     

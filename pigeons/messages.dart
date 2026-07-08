@@ -29,15 +29,31 @@ enum EdgeGenaiAvailability {
   unavailable,
 }
 
+/// Optional parameters controlling how the model generates its response.
+///
+/// Only fields supported by both Android and iOS are exposed here.
+class EdgeGenaiGenerationOptions {
+  EdgeGenaiGenerationOptions({this.temperature, this.maxOutputTokens});
+
+  /// Controls the randomness of the output. Higher values produce more
+  /// creative (less predictable) responses.
+  final double? temperature;
+
+  /// The maximum number of tokens the model may generate in its response.
+  final int? maxOutputTokens;
+}
+
 @HostApi()
 abstract class EdgeGenaiHostApi {
   @async
   EdgeGenaiAvailability checkAvailability();
 
-  /// Sends [prompt] to the on-device model and returns its generated text
-  /// response.
-  @async
-  String generateContent(String prompt);
+  /// Stores [prompt] and [options] for the next `generateContentChunk` event
+  /// channel subscription to use.
+  ///
+  /// Event channels can't carry parameters, so callers must invoke this
+  /// immediately before listening to the `generateContentChunk` stream.
+  void startGenerateContent(String prompt, EdgeGenaiGenerationOptions? options);
 }
 
 /// The status of an on-device model download.
@@ -65,12 +81,18 @@ class EdgeGenaiDownloadProgress {
 }
 
 @EventChannelApi()
-abstract class EdgeGenaiDownloadEventApi {
+abstract class EdgeGenaiEventApi {
   /// Triggers the on-device model download (if one is needed) and streams
   /// progress updates until it completes or fails.
   ///
-  /// On iOS there's nothing for the app to download \u2014 Apple Intelligence is
-  /// enabled system-wide in Settings \u2014 so this immediately emits a single
+  /// On iOS there's nothing for the app to download — Apple Intelligence is
+  /// enabled system-wide in Settings — so this immediately emits a single
   /// `completed` event.
   EdgeGenaiDownloadProgress downloadProgress();
+
+  /// Streams the response set up via `startGenerateContent`.
+  ///
+  /// Each event is the full response text generated so far (not just the
+  /// newly-added chunk), so UI code can simply display the latest event.
+  String generateContentChunk();
 }

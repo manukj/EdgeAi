@@ -17,8 +17,8 @@ class MockEdgeGenaiPlatform
   );
 
   @override
-  Future<String> generateContent(String prompt) =>
-      Future.value('a generated response');
+  Stream<String> generateContent(String prompt, {EdgeGenaiGenerationOptions? options}) =>
+      Stream.value('a generated response');
 }
 
 void main() {
@@ -55,9 +55,9 @@ void main() {
     MockEdgeGenaiPlatform fakePlatform = MockEdgeGenaiPlatform();
     EdgeGenaiPlatform.instance = fakePlatform;
 
-    expect(
-      await edgeGenaiPlugin.generateContent('a prompt'),
-      'a generated response',
+    await expectLater(
+      edgeGenaiPlugin.generateContent('a prompt'),
+      emits('a generated response'),
     );
   });
 }

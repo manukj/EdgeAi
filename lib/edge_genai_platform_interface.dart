@@ -2,6 +2,7 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'edge_genai_availability.dart';
 import 'edge_genai_download_progress.dart';
+import 'edge_genai_generation_options.dart';
 import 'edge_genai_method_channel.dart';
 
 abstract class EdgeGenaiPlatform extends PlatformInterface {
@@ -36,9 +37,14 @@ abstract class EdgeGenaiPlatform extends PlatformInterface {
     throw UnimplementedError('downloadModel() has not been implemented.');
   }
 
-  /// Sends [prompt] to the on-device model and returns its generated text
-  /// response.
-  Future<String> generateContent(String prompt) {
+  /// Sends [prompt] to the on-device model and streams its generated text.
+  ///
+  /// Each event is the full response text generated so far, not just the
+  /// newly-added chunk.
+  Stream<String> generateContent(
+    String prompt, {
+    EdgeGenaiGenerationOptions? options,
+  }) {
     throw UnimplementedError('generateContent() has not been implemented.');
   }
 }

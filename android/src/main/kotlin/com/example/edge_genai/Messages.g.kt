@@ -234,6 +234,58 @@ enum class EdgeGenaiDownloadStatus(val raw: Int) {
 }
 
 /**
+ * Optional parameters controlling how the model generates its response.
+ *
+ * Only fields supported by both Android and iOS are exposed here.
+ *
+ * Generated class from Pigeon that represents data sent in messages.
+ */
+data class EdgeGenaiGenerationOptions (
+  /**
+   * Controls the randomness of the output. Higher values produce more
+   * creative (less predictable) responses.
+   */
+  val temperature: Double? = null,
+  /** The maximum number of tokens the model may generate in its response. */
+  val maxOutputTokens: Long? = null
+)
+ {
+  companion object {
+    fun fromList(pigeonVar_list: List<Any?>): EdgeGenaiGenerationOptions {
+      val temperature = pigeonVar_list[0] as Double?
+      val maxOutputTokens = pigeonVar_list[1] as Long?
+      return EdgeGenaiGenerationOptions(temperature, maxOutputTokens)
+    }
+  }
+  fun toList(): List<Any?> {
+    return listOf(
+      temperature,
+      maxOutputTokens,
+    )
+  }
+  override fun equals(other: Any?): Boolean {
+    if (other == null || other.javaClass != javaClass) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    val other = other as EdgeGenaiGenerationOptions
+    return MessagesPigeonUtils.deepEquals(this.temperature, other.temperature) && MessagesPigeonUtils.deepEquals(this.maxOutputTokens, other.maxOutputTokens)
+  }
+
+  override fun hashCode(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.temperature)
+    result = 31 * result + MessagesPigeonUtils.deepHash(this.maxOutputTokens)
+    return result
+  }
+  override fun toString(): String {
+    return "EdgeGenaiGenerationOptions(temperature=$temperature, maxOutputTokens=$maxOutputTokens)"
+  }
+}
+
+/**
  * A single download progress update.
  *
  * Generated class from Pigeon that represents data sent in messages.
@@ -297,6 +349,11 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
       }
       131.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
+          EdgeGenaiGenerationOptions.fromList(it)
+        }
+      }
+      132.toByte() -> {
+        return (readValue(buffer) as? List<Any?>)?.let {
           EdgeGenaiDownloadProgress.fromList(it)
         }
       }
@@ -313,8 +370,12 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
         stream.write(130)
         writeValue(stream, value.raw.toLong())
       }
-      is EdgeGenaiDownloadProgress -> {
+      is EdgeGenaiGenerationOptions -> {
         stream.write(131)
+        writeValue(stream, value.toList())
+      }
+      is EdgeGenaiDownloadProgress -> {
+        stream.write(132)
         writeValue(stream, value.toList())
       }
       else -> super.writeValue(stream, value)
@@ -329,10 +390,13 @@ val MessagesPigeonMethodCodec = StandardMethodCodec(MessagesPigeonCodec())
 interface EdgeGenaiHostApi {
   fun checkAvailability(callback: (Result<EdgeGenaiAvailability>) -> Unit)
   /**
-   * Sends [prompt] to the on-device model and returns its generated text
-   * response.
+   * Stores [prompt] and [options] for the next `generateContentChunk` event
+   * channel subscription to use.
+   *
+   * Event channels can't carry parameters, so callers must invoke this
+   * immediately before listening to the `generateContentChunk` stream.
    */
-  fun generateContent(prompt: String, callback: (Result<String>) -> Unit)
+  fun startGenerateContent(prompt: String, options: EdgeGenaiGenerationOptions?)
 
   companion object {
     /** The codec used by EdgeGenaiHostApi. */
@@ -362,20 +426,19 @@ interface EdgeGenaiHostApi {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.generateContent$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.startGenerateContent$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val promptArg = args[0] as String
-            api.generateContent(promptArg) { result: Result<String> ->
-              val error = result.exceptionOrNull()
-              if (error != null) {
-                reply.reply(MessagesPigeonUtils.wrapError(error))
-              } else {
-                val data = result.getOrNull()
-                reply.reply(MessagesPigeonUtils.wrapResult(data))
-              }
+            val optionsArg = args[1] as EdgeGenaiGenerationOptions?
+            val wrapped: List<Any?> = try {
+              api.startGenerateContent(promptArg, optionsArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              MessagesPigeonUtils.wrapError(exception)
             }
+            reply.reply(wrapped)
           }
         } else {
           channel.setMessageHandler(null)
@@ -424,7 +487,7 @@ class PigeonEventSink<T>(private val sink: EventChannel.EventSink) {
 abstract class DownloadProgressStreamHandler : MessagesPigeonEventChannelWrapper<EdgeGenaiDownloadProgress> {
   companion object {
     fun register(messenger: BinaryMessenger, streamHandler: DownloadProgressStreamHandler, instanceName: String = "") {
-      var channelName: String = "dev.flutter.pigeon.edge_genai.EdgeGenaiDownloadEventApi.downloadProgress"
+      var channelName: String = "dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.downloadProgress"
       if (instanceName.isNotEmpty()) {
         channelName += ".$instanceName"
       }
@@ -434,6 +497,23 @@ abstract class DownloadProgressStreamHandler : MessagesPigeonEventChannelWrapper
   }
 // Implement methods from MessagesPigeonEventChannelWrapper
 override fun onListen(p0: Any?, sink: PigeonEventSink<EdgeGenaiDownloadProgress>) {}
+
+override fun onCancel(p0: Any?) {}
+}
+      
+abstract class GenerateContentChunkStreamHandler : MessagesPigeonEventChannelWrapper<String> {
+  companion object {
+    fun register(messenger: BinaryMessenger, streamHandler: GenerateContentChunkStreamHandler, instanceName: String = "") {
+      var channelName: String = "dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.generateContentChunk"
+      if (instanceName.isNotEmpty()) {
+        channelName += ".$instanceName"
+      }
+      val internalStreamHandler = MessagesPigeonStreamHandler<String>(streamHandler)
+      EventChannel(messenger, channelName, MessagesPigeonMethodCodec).setStreamHandler(internalStreamHandler)
+    }
+  }
+// Implement methods from MessagesPigeonEventChannelWrapper
+override fun onListen(p0: Any?, sink: PigeonEventSink<String>) {}
 
 override fun onCancel(p0: Any?) {}
 }

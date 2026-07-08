@@ -24,12 +24,10 @@ void main() {
 
   setUp(() {
     mockChannel('checkAvailability', EdgeGenaiAvailability.available);
-    mockChannel('generateContent', 'a generated response');
   });
 
   tearDown(() {
     mockChannel('checkAvailability', null);
-    mockChannel('generateContent', null);
   });
 
   test('checkAvailability', () async {
@@ -39,16 +37,9 @@ void main() {
     );
   });
 
-  test('generateContent', () async {
-    expect(
-      await platform.generateContent('a prompt'),
-      'a generated response',
-    );
-  });
-
   test('downloadModel', () async {
     const channelName =
-        'dev.flutter.pigeon.edge_genai.EdgeGenaiDownloadEventApi.downloadProgress';
+        'dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.downloadProgress';
     final progress = EdgeGenaiDownloadProgress(
       status: EdgeGenaiDownloadStatus.completed,
     );
@@ -65,5 +56,36 @@ void main() {
     await expectLater(platform.downloadModel(), emits(progress));
 
     messenger.setMockMessageHandler(channelName, null);
+  });
+
+  test('generateContent', () async {
+    const hostChannel =
+        'dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.startGenerateContent';
+    const eventChannel =
+        'dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.generateContentChunk';
+
+    messenger.setMockMessageHandler(hostChannel, (ByteData? message) async {
+      return EdgeGenaiHostApi.pigeonChannelCodec.encodeMessage(<Object?>[
+        null,
+      ]);
+    });
+    messenger.setMockMessageHandler(eventChannel, (ByteData? message) async {
+      final call = pigeonMethodCodec.decodeMethodCall(message);
+      if (call.method == 'listen') {
+        final envelope = pigeonMethodCodec.encodeSuccessEnvelope(
+          'a generated response',
+        );
+        await messenger.handlePlatformMessage(eventChannel, envelope, (_) {});
+      }
+      return null;
+    });
+
+    await expectLater(
+      platform.generateContent('a prompt'),
+      emits('a generated response'),
+    );
+
+    messenger.setMockMessageHandler(hostChannel, null);
+    messenger.setMockMessageHandler(eventChannel, null);
   });
 }
