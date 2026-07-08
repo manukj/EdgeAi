@@ -1,4 +1,4 @@
-name: edge_genai
+name: edge_ai
 description: "A new Flutter plugin project."
 version: 0.0.1
 homepage:
@@ -23,7 +23,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.example.edge_genai
-        pluginClass: EdgeGenaiPlugin
+        package: com.example.edge_ai
+        pluginClass: EdgeAiPlugin
       ios:
-        pluginClass: EdgeGenaiPlugin
+        pluginClass: EdgeAiPlugin

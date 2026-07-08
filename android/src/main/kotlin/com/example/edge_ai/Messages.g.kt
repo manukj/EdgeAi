@@ -2,7 +2,7 @@
 // See also: https://pub.dev/packages/pigeon
 @file:Suppress("UNCHECKED_CAST", "ArrayInDataClass")
 
-package com.example.edge_genai
+package com.example.edge_ai
 
 import android.util.Log
 import io.flutter.plugin.common.BasicMessageChannel
@@ -193,7 +193,7 @@ class FlutterError (
 ) : RuntimeException()
 
 /** The availability of the on-device generative AI model. */
-enum class EdgeGenaiAvailability(val raw: Int) {
+enum class EdgeAiAvailability(val raw: Int) {
   /** The model is available and ready to use. */
   AVAILABLE(0),
   /**
@@ -211,14 +211,14 @@ enum class EdgeGenaiAvailability(val raw: Int) {
   UNAVAILABLE(3);
 
   companion object {
-    fun ofRaw(raw: Int): EdgeGenaiAvailability? {
+    fun ofRaw(raw: Int): EdgeAiAvailability? {
       return values().firstOrNull { it.raw == raw }
     }
   }
 }
 
 /** The status of an on-device model download. */
-enum class EdgeGenaiDownloadStatus(val raw: Int) {
+enum class EdgeAiDownloadStatus(val raw: Int) {
   /** The download has started. */
   STARTED(0),
   /** The download is in progress. */
@@ -227,7 +227,7 @@ enum class EdgeGenaiDownloadStatus(val raw: Int) {
   COMPLETED(2);
 
   companion object {
-    fun ofRaw(raw: Int): EdgeGenaiDownloadStatus? {
+    fun ofRaw(raw: Int): EdgeAiDownloadStatus? {
       return values().firstOrNull { it.raw == raw }
     }
   }
@@ -240,7 +240,7 @@ enum class EdgeGenaiDownloadStatus(val raw: Int) {
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class EdgeGenaiGenerationOptions (
+data class EdgeAiGenerationOptions (
   /**
    * Controls the randomness of the output. Higher values produce more
    * creative (less predictable) responses.
@@ -251,10 +251,10 @@ data class EdgeGenaiGenerationOptions (
 )
  {
   companion object {
-    fun fromList(pigeonVar_list: List<Any?>): EdgeGenaiGenerationOptions {
+    fun fromList(pigeonVar_list: List<Any?>): EdgeAiGenerationOptions {
       val temperature = pigeonVar_list[0] as Double?
       val maxOutputTokens = pigeonVar_list[1] as Long?
-      return EdgeGenaiGenerationOptions(temperature, maxOutputTokens)
+      return EdgeAiGenerationOptions(temperature, maxOutputTokens)
     }
   }
   fun toList(): List<Any?> {
@@ -270,7 +270,7 @@ data class EdgeGenaiGenerationOptions (
     if (this === other) {
       return true
     }
-    val other = other as EdgeGenaiGenerationOptions
+    val other = other as EdgeAiGenerationOptions
     return MessagesPigeonUtils.deepEquals(this.temperature, other.temperature) && MessagesPigeonUtils.deepEquals(this.maxOutputTokens, other.maxOutputTokens)
   }
 
@@ -281,7 +281,7 @@ data class EdgeGenaiGenerationOptions (
     return result
   }
   override fun toString(): String {
-    return "EdgeGenaiGenerationOptions(temperature=$temperature, maxOutputTokens=$maxOutputTokens)"
+    return "EdgeAiGenerationOptions(temperature=$temperature, maxOutputTokens=$maxOutputTokens)"
   }
 }
 
@@ -290,21 +290,21 @@ data class EdgeGenaiGenerationOptions (
  *
  * Generated class from Pigeon that represents data sent in messages.
  */
-data class EdgeGenaiDownloadProgress (
+data class EdgeAiDownloadProgress (
   /** The current status of the download. */
-  val status: EdgeGenaiDownloadStatus,
+  val status: EdgeAiDownloadStatus,
   /**
    * The total number of bytes downloaded so far. Only populated when
-   * [status] is [EdgeGenaiDownloadStatus.inProgress].
+   * [status] is [EdgeAiDownloadStatus.inProgress].
    */
   val bytesDownloaded: Long? = null
 )
  {
   companion object {
-    fun fromList(pigeonVar_list: List<Any?>): EdgeGenaiDownloadProgress {
-      val status = pigeonVar_list[0] as EdgeGenaiDownloadStatus
+    fun fromList(pigeonVar_list: List<Any?>): EdgeAiDownloadProgress {
+      val status = pigeonVar_list[0] as EdgeAiDownloadStatus
       val bytesDownloaded = pigeonVar_list[1] as Long?
-      return EdgeGenaiDownloadProgress(status, bytesDownloaded)
+      return EdgeAiDownloadProgress(status, bytesDownloaded)
     }
   }
   fun toList(): List<Any?> {
@@ -320,7 +320,7 @@ data class EdgeGenaiDownloadProgress (
     if (this === other) {
       return true
     }
-    val other = other as EdgeGenaiDownloadProgress
+    val other = other as EdgeAiDownloadProgress
     return MessagesPigeonUtils.deepEquals(this.status, other.status) && MessagesPigeonUtils.deepEquals(this.bytesDownloaded, other.bytesDownloaded)
   }
 
@@ -331,7 +331,7 @@ data class EdgeGenaiDownloadProgress (
     return result
   }
   override fun toString(): String {
-    return "EdgeGenaiDownloadProgress(status=$status, bytesDownloaded=$bytesDownloaded)"
+    return "EdgeAiDownloadProgress(status=$status, bytesDownloaded=$bytesDownloaded)"
   }
 }
 private open class MessagesPigeonCodec : StandardMessageCodec() {
@@ -339,22 +339,22 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
     return when (type) {
       129.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          EdgeGenaiAvailability.ofRaw(it.toInt())
+          EdgeAiAvailability.ofRaw(it.toInt())
         }
       }
       130.toByte() -> {
         return (readValue(buffer) as Long?)?.let {
-          EdgeGenaiDownloadStatus.ofRaw(it.toInt())
+          EdgeAiDownloadStatus.ofRaw(it.toInt())
         }
       }
       131.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          EdgeGenaiGenerationOptions.fromList(it)
+          EdgeAiGenerationOptions.fromList(it)
         }
       }
       132.toByte() -> {
         return (readValue(buffer) as? List<Any?>)?.let {
-          EdgeGenaiDownloadProgress.fromList(it)
+          EdgeAiDownloadProgress.fromList(it)
         }
       }
       else -> super.readValueOfType(type, buffer)
@@ -362,19 +362,19 @@ private open class MessagesPigeonCodec : StandardMessageCodec() {
   }
   override fun writeValue(stream: ByteArrayOutputStream, value: Any?)   {
     when (value) {
-      is EdgeGenaiAvailability -> {
+      is EdgeAiAvailability -> {
         stream.write(129)
         writeValue(stream, value.raw.toLong())
       }
-      is EdgeGenaiDownloadStatus -> {
+      is EdgeAiDownloadStatus -> {
         stream.write(130)
         writeValue(stream, value.raw.toLong())
       }
-      is EdgeGenaiGenerationOptions -> {
+      is EdgeAiGenerationOptions -> {
         stream.write(131)
         writeValue(stream, value.toList())
       }
-      is EdgeGenaiDownloadProgress -> {
+      is EdgeAiDownloadProgress -> {
         stream.write(132)
         writeValue(stream, value.toList())
       }
@@ -387,8 +387,8 @@ val MessagesPigeonMethodCodec = StandardMethodCodec(MessagesPigeonCodec())
 
 
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
-interface EdgeGenaiHostApi {
-  fun checkAvailability(callback: (Result<EdgeGenaiAvailability>) -> Unit)
+interface EdgeAiHostApi {
+  fun checkAvailability(callback: (Result<EdgeAiAvailability>) -> Unit)
   /**
    * Stores [prompt] and [options] for the next `generateContentChunk` event
    * channel subscription to use.
@@ -396,22 +396,22 @@ interface EdgeGenaiHostApi {
    * Event channels can't carry parameters, so callers must invoke this
    * immediately before listening to the `generateContentChunk` stream.
    */
-  fun startGenerateContent(prompt: String, options: EdgeGenaiGenerationOptions?)
+  fun startGenerateContent(prompt: String, options: EdgeAiGenerationOptions?)
 
   companion object {
-    /** The codec used by EdgeGenaiHostApi. */
+    /** The codec used by EdgeAiHostApi. */
     val codec: MessageCodec<Any?> by lazy {
       MessagesPigeonCodec()
     }
-    /** Sets up an instance of `EdgeGenaiHostApi` to handle messages through the `binaryMessenger`. */
+    /** Sets up an instance of `EdgeAiHostApi` to handle messages through the `binaryMessenger`. */
     @JvmOverloads
-    fun setUp(binaryMessenger: BinaryMessenger, api: EdgeGenaiHostApi?, messageChannelSuffix: String = "") {
+    fun setUp(binaryMessenger: BinaryMessenger, api: EdgeAiHostApi?, messageChannelSuffix: String = "") {
       val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.checkAvailability$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.edge_ai.EdgeAiHostApi.checkAvailability$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { _, reply ->
-            api.checkAvailability{ result: Result<EdgeGenaiAvailability> ->
+            api.checkAvailability{ result: Result<EdgeAiAvailability> ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(MessagesPigeonUtils.wrapError(error))
@@ -426,12 +426,12 @@ interface EdgeGenaiHostApi {
         }
       }
       run {
-        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.startGenerateContent$separatedMessageChannelSuffix", codec)
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.edge_ai.EdgeAiHostApi.startGenerateContent$separatedMessageChannelSuffix", codec)
         if (api != null) {
           channel.setMessageHandler { message, reply ->
             val args = message as List<Any?>
             val promptArg = args[0] as String
-            val optionsArg = args[1] as EdgeGenaiGenerationOptions?
+            val optionsArg = args[1] as EdgeAiGenerationOptions?
             val wrapped: List<Any?> = try {
               api.startGenerateContent(promptArg, optionsArg)
               listOf(null)
@@ -484,19 +484,19 @@ class PigeonEventSink<T>(private val sink: EventChannel.EventSink) {
   }
 }
       
-abstract class DownloadProgressStreamHandler : MessagesPigeonEventChannelWrapper<EdgeGenaiDownloadProgress> {
+abstract class DownloadProgressStreamHandler : MessagesPigeonEventChannelWrapper<EdgeAiDownloadProgress> {
   companion object {
     fun register(messenger: BinaryMessenger, streamHandler: DownloadProgressStreamHandler, instanceName: String = "") {
-      var channelName: String = "dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.downloadProgress"
+      var channelName: String = "dev.flutter.pigeon.edge_ai.EdgeAiEventApi.downloadProgress"
       if (instanceName.isNotEmpty()) {
         channelName += ".$instanceName"
       }
-      val internalStreamHandler = MessagesPigeonStreamHandler<EdgeGenaiDownloadProgress>(streamHandler)
+      val internalStreamHandler = MessagesPigeonStreamHandler<EdgeAiDownloadProgress>(streamHandler)
       EventChannel(messenger, channelName, MessagesPigeonMethodCodec).setStreamHandler(internalStreamHandler)
     }
   }
 // Implement methods from MessagesPigeonEventChannelWrapper
-override fun onListen(p0: Any?, sink: PigeonEventSink<EdgeGenaiDownloadProgress>) {}
+override fun onListen(p0: Any?, sink: PigeonEventSink<EdgeAiDownloadProgress>) {}
 
 override fun onCancel(p0: Any?) {}
 }
@@ -504,7 +504,7 @@ override fun onCancel(p0: Any?) {}
 abstract class GenerateContentChunkStreamHandler : MessagesPigeonEventChannelWrapper<String> {
   companion object {
     fun register(messenger: BinaryMessenger, streamHandler: GenerateContentChunkStreamHandler, instanceName: String = "") {
-      var channelName: String = "dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.generateContentChunk"
+      var channelName: String = "dev.flutter.pigeon.edge_ai.EdgeAiEventApi.generateContentChunk"
       if (instanceName.isNotEmpty()) {
         channelName += ".$instanceName"
       }

@@ -1,39 +1,39 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-import 'edge_genai_availability.dart';
-import 'edge_genai_download_progress.dart';
-import 'edge_genai_generation_options.dart';
-import 'edge_genai_method_channel.dart';
+import 'edge_ai_availability.dart';
+import 'edge_ai_download_progress.dart';
+import 'edge_ai_generation_options.dart';
+import 'edge_ai_method_channel.dart';
 
-abstract class EdgeGenaiPlatform extends PlatformInterface {
-  /// Constructs a EdgeGenaiPlatform.
-  EdgeGenaiPlatform() : super(token: _token);
+abstract class EdgeAiPlatform extends PlatformInterface {
+  /// Constructs a EdgeAiPlatform.
+  EdgeAiPlatform() : super(token: _token);
 
   static final Object _token = Object();
 
-  static EdgeGenaiPlatform _instance = MethodChannelEdgeGenai();
+  static EdgeAiPlatform _instance = MethodChannelEdgeAi();
 
-  /// The default instance of [EdgeGenaiPlatform] to use.
+  /// The default instance of [EdgeAiPlatform] to use.
   ///
-  /// Defaults to [MethodChannelEdgeGenai].
-  static EdgeGenaiPlatform get instance => _instance;
+  /// Defaults to [MethodChannelEdgeAi].
+  static EdgeAiPlatform get instance => _instance;
 
   /// Platform-specific implementations should set this with their own
-  /// platform-specific class that extends [EdgeGenaiPlatform] when
+  /// platform-specific class that extends [EdgeAiPlatform] when
   /// they register themselves.
-  static set instance(EdgeGenaiPlatform instance) {
+  static set instance(EdgeAiPlatform instance) {
     PlatformInterface.verifyToken(instance, _token);
     _instance = instance;
   }
 
   /// Checks whether the on-device generative AI model is available.
-  Future<EdgeGenaiAvailability> checkAvailability() {
+  Future<EdgeAiAvailability> checkAvailability() {
     throw UnimplementedError('checkAvailability() has not been implemented.');
   }
 
   /// Triggers the on-device model download (if one is needed) and streams
   /// progress updates until it completes or fails.
-  Stream<EdgeGenaiDownloadProgress> downloadModel() {
+  Stream<EdgeAiDownloadProgress> downloadModel() {
     throw UnimplementedError('downloadModel() has not been implemented.');
   }
 
@@ -43,7 +43,7 @@ abstract class EdgeGenaiPlatform extends PlatformInterface {
   /// newly-added chunk.
   Stream<String> generateContent(
     String prompt, {
-    EdgeGenaiGenerationOptions? options,
+    EdgeAiGenerationOptions? options,
   }) {
     throw UnimplementedError('generateContent() has not been implemented.');
   }

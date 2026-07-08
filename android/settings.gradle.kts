@@ -18,4 +18,4 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "edge_genai"
+rootProject.name = "edge_ai"

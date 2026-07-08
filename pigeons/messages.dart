@@ -4,15 +4,15 @@ import 'package:pigeon/pigeon.dart';
   PigeonOptions(
     dartOut: 'lib/src/messages.g.dart',
     kotlinOut:
-        'android/src/main/kotlin/com/example/edge_genai/Messages.g.kt',
-    kotlinOptions: KotlinOptions(package: 'com.example.edge_genai'),
+        'android/src/main/kotlin/com/example/edge_ai/Messages.g.kt',
+    kotlinOptions: KotlinOptions(package: 'com.example.edge_ai'),
     swiftOut: 'ios/Classes/Messages.g.swift',
-    dartPackageName: 'edge_genai',
+    dartPackageName: 'edge_ai',
   ),
 )
 
 /// The availability of the on-device generative AI model.
-enum EdgeGenaiAvailability {
+enum EdgeAiAvailability {
   /// The model is available and ready to use.
   available,
 
@@ -32,8 +32,8 @@ enum EdgeGenaiAvailability {
 /// Optional parameters controlling how the model generates its response.
 ///
 /// Only fields supported by both Android and iOS are exposed here.
-class EdgeGenaiGenerationOptions {
-  EdgeGenaiGenerationOptions({this.temperature, this.maxOutputTokens});
+class EdgeAiGenerationOptions {
+  EdgeAiGenerationOptions({this.temperature, this.maxOutputTokens});
 
   /// Controls the randomness of the output. Higher values produce more
   /// creative (less predictable) responses.
@@ -44,20 +44,20 @@ class EdgeGenaiGenerationOptions {
 }
 
 @HostApi()
-abstract class EdgeGenaiHostApi {
+abstract class EdgeAiHostApi {
   @async
-  EdgeGenaiAvailability checkAvailability();
+  EdgeAiAvailability checkAvailability();
 
   /// Stores [prompt] and [options] for the next `generateContentChunk` event
   /// channel subscription to use.
   ///
   /// Event channels can't carry parameters, so callers must invoke this
   /// immediately before listening to the `generateContentChunk` stream.
-  void startGenerateContent(String prompt, EdgeGenaiGenerationOptions? options);
+  void startGenerateContent(String prompt, EdgeAiGenerationOptions? options);
 }
 
 /// The status of an on-device model download.
-enum EdgeGenaiDownloadStatus {
+enum EdgeAiDownloadStatus {
   /// The download has started.
   started,
 
@@ -69,26 +69,26 @@ enum EdgeGenaiDownloadStatus {
 }
 
 /// A single download progress update.
-class EdgeGenaiDownloadProgress {
-  EdgeGenaiDownloadProgress({required this.status, this.bytesDownloaded});
+class EdgeAiDownloadProgress {
+  EdgeAiDownloadProgress({required this.status, this.bytesDownloaded});
 
   /// The current status of the download.
-  final EdgeGenaiDownloadStatus status;
+  final EdgeAiDownloadStatus status;
 
   /// The total number of bytes downloaded so far. Only populated when
-  /// [status] is [EdgeGenaiDownloadStatus.inProgress].
+  /// [status] is [EdgeAiDownloadStatus.inProgress].
   final int? bytesDownloaded;
 }
 
 @EventChannelApi()
-abstract class EdgeGenaiEventApi {
+abstract class EdgeAiEventApi {
   /// Triggers the on-device model download (if one is needed) and streams
   /// progress updates until it completes or fails.
   ///
   /// On iOS there's nothing for the app to download — Apple Intelligence is
   /// enabled system-wide in Settings — so this immediately emits a single
   /// `completed` event.
-  EdgeGenaiDownloadProgress downloadProgress();
+  EdgeAiDownloadProgress downloadProgress();
 
   /// Streams the response set up via `startGenerateContent`.
   ///

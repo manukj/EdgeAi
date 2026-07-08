@@ -185,7 +185,7 @@ private func nilOrValue<T>(_ value: Any?) -> T? {
 
 
 /// The availability of the on-device generative AI model.
-enum EdgeGenaiAvailability: Int, CaseIterable {
+enum EdgeAiAvailability: Int, CaseIterable {
   /// The model is available and ready to use.
   case available = 0
   /// The device supports the model, but it still needs to download (for
@@ -200,7 +200,7 @@ enum EdgeGenaiAvailability: Int, CaseIterable {
 }
 
 /// The status of an on-device model download.
-enum EdgeGenaiDownloadStatus: Int, CaseIterable {
+enum EdgeAiDownloadStatus: Int, CaseIterable {
   /// The download has started.
   case started = 0
   /// The download is in progress.
@@ -214,7 +214,7 @@ enum EdgeGenaiDownloadStatus: Int, CaseIterable {
 /// Only fields supported by both Android and iOS are exposed here.
 ///
 /// Generated class from Pigeon that represents data sent in messages.
-struct EdgeGenaiGenerationOptions: Hashable, CustomStringConvertible {
+struct EdgeAiGenerationOptions: Hashable, CustomStringConvertible {
   /// Controls the randomness of the output. Higher values produce more
   /// creative (less predictable) responses.
   var temperature: Double? = nil
@@ -223,11 +223,11 @@ struct EdgeGenaiGenerationOptions: Hashable, CustomStringConvertible {
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
-  static func fromList(_ pigeonVar_list: [Any?]) -> EdgeGenaiGenerationOptions? {
+  static func fromList(_ pigeonVar_list: [Any?]) -> EdgeAiGenerationOptions? {
     let temperature: Double? = nilOrValue(pigeonVar_list[0])
     let maxOutputTokens: Int64? = nilOrValue(pigeonVar_list[1])
 
-    return EdgeGenaiGenerationOptions(
+    return EdgeAiGenerationOptions(
       temperature: temperature,
       maxOutputTokens: maxOutputTokens
     )
@@ -238,7 +238,7 @@ struct EdgeGenaiGenerationOptions: Hashable, CustomStringConvertible {
       maxOutputTokens,
     ]
   }
-  static func == (lhs: EdgeGenaiGenerationOptions, rhs: EdgeGenaiGenerationOptions) -> Bool {
+  static func == (lhs: EdgeAiGenerationOptions, rhs: EdgeAiGenerationOptions) -> Bool {
     if Swift.type(of: lhs) != Swift.type(of: rhs) {
       return false
     }
@@ -246,33 +246,33 @@ struct EdgeGenaiGenerationOptions: Hashable, CustomStringConvertible {
   }
 
   func hash(into hasher: inout Hasher) {
-    hasher.combine("EdgeGenaiGenerationOptions")
+    hasher.combine("EdgeAiGenerationOptions")
     MessagesPigeonInternal.deepHash(value: temperature, hasher: &hasher)
     MessagesPigeonInternal.deepHash(value: maxOutputTokens, hasher: &hasher)
   }
 
   public var description: String {
-    return "EdgeGenaiGenerationOptions(temperature: \(String(describing: temperature)), maxOutputTokens: \(String(describing: maxOutputTokens)))"
+    return "EdgeAiGenerationOptions(temperature: \(String(describing: temperature)), maxOutputTokens: \(String(describing: maxOutputTokens)))"
   }
 }
 
 /// A single download progress update.
 ///
 /// Generated class from Pigeon that represents data sent in messages.
-struct EdgeGenaiDownloadProgress: Hashable, CustomStringConvertible {
+struct EdgeAiDownloadProgress: Hashable, CustomStringConvertible {
   /// The current status of the download.
-  var status: EdgeGenaiDownloadStatus
+  var status: EdgeAiDownloadStatus
   /// The total number of bytes downloaded so far. Only populated when
-  /// [status] is [EdgeGenaiDownloadStatus.inProgress].
+  /// [status] is [EdgeAiDownloadStatus.inProgress].
   var bytesDownloaded: Int64? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
-  static func fromList(_ pigeonVar_list: [Any?]) -> EdgeGenaiDownloadProgress? {
-    let status = pigeonVar_list[0] as! EdgeGenaiDownloadStatus
+  static func fromList(_ pigeonVar_list: [Any?]) -> EdgeAiDownloadProgress? {
+    let status = pigeonVar_list[0] as! EdgeAiDownloadStatus
     let bytesDownloaded: Int64? = nilOrValue(pigeonVar_list[1])
 
-    return EdgeGenaiDownloadProgress(
+    return EdgeAiDownloadProgress(
       status: status,
       bytesDownloaded: bytesDownloaded
     )
@@ -283,7 +283,7 @@ struct EdgeGenaiDownloadProgress: Hashable, CustomStringConvertible {
       bytesDownloaded,
     ]
   }
-  static func == (lhs: EdgeGenaiDownloadProgress, rhs: EdgeGenaiDownloadProgress) -> Bool {
+  static func == (lhs: EdgeAiDownloadProgress, rhs: EdgeAiDownloadProgress) -> Bool {
     if Swift.type(of: lhs) != Swift.type(of: rhs) {
       return false
     }
@@ -291,13 +291,13 @@ struct EdgeGenaiDownloadProgress: Hashable, CustomStringConvertible {
   }
 
   func hash(into hasher: inout Hasher) {
-    hasher.combine("EdgeGenaiDownloadProgress")
+    hasher.combine("EdgeAiDownloadProgress")
     MessagesPigeonInternal.deepHash(value: status, hasher: &hasher)
     MessagesPigeonInternal.deepHash(value: bytesDownloaded, hasher: &hasher)
   }
 
   public var description: String {
-    return "EdgeGenaiDownloadProgress(status: \(String(describing: status)), bytesDownloaded: \(String(describing: bytesDownloaded)))"
+    return "EdgeAiDownloadProgress(status: \(String(describing: status)), bytesDownloaded: \(String(describing: bytesDownloaded)))"
   }
 }
 
@@ -307,19 +307,19 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
     case 129:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return EdgeGenaiAvailability(rawValue: enumResultAsInt)
+        return EdgeAiAvailability(rawValue: enumResultAsInt)
       }
       return nil
     case 130:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return EdgeGenaiDownloadStatus(rawValue: enumResultAsInt)
+        return EdgeAiDownloadStatus(rawValue: enumResultAsInt)
       }
       return nil
     case 131:
-      return EdgeGenaiGenerationOptions.fromList(self.readValue() as! [Any?])
+      return EdgeAiGenerationOptions.fromList(self.readValue() as! [Any?])
     case 132:
-      return EdgeGenaiDownloadProgress.fromList(self.readValue() as! [Any?])
+      return EdgeAiDownloadProgress.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
     }
@@ -328,16 +328,16 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
 
 private class MessagesPigeonCodecWriter: FlutterStandardWriter {
   override func writeValue(_ value: Any) {
-    if let value = value as? EdgeGenaiAvailability {
+    if let value = value as? EdgeAiAvailability {
       super.writeByte(129)
       super.writeValue(value.rawValue)
-    } else if let value = value as? EdgeGenaiDownloadStatus {
+    } else if let value = value as? EdgeAiDownloadStatus {
       super.writeByte(130)
       super.writeValue(value.rawValue)
-    } else if let value = value as? EdgeGenaiGenerationOptions {
+    } else if let value = value as? EdgeAiGenerationOptions {
       super.writeByte(131)
       super.writeValue(value.toList())
-    } else if let value = value as? EdgeGenaiDownloadProgress {
+    } else if let value = value as? EdgeAiDownloadProgress {
       super.writeByte(132)
       super.writeValue(value.toList())
     } else {
@@ -364,23 +364,23 @@ var messagesPigeonMethodCodec = FlutterStandardMethodCodec(readerWriter: Message
 
 
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
-protocol EdgeGenaiHostApi {
-  func checkAvailability(completion: @escaping (Result<EdgeGenaiAvailability, Error>) -> Void)
+protocol EdgeAiHostApi {
+  func checkAvailability(completion: @escaping (Result<EdgeAiAvailability, Error>) -> Void)
   /// Stores [prompt] and [options] for the next `generateContentChunk` event
   /// channel subscription to use.
   ///
   /// Event channels can't carry parameters, so callers must invoke this
   /// immediately before listening to the `generateContentChunk` stream.
-  func startGenerateContent(prompt: String, options: EdgeGenaiGenerationOptions?) throws
+  func startGenerateContent(prompt: String, options: EdgeAiGenerationOptions?) throws
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
-class EdgeGenaiHostApiSetup {
+class EdgeAiHostApiSetup {
   static var codec: FlutterStandardMessageCodec { MessagesPigeonCodec.shared }
-  /// Sets up an instance of `EdgeGenaiHostApi` to handle messages through the `binaryMessenger`.
-  static func setUp(binaryMessenger: FlutterBinaryMessenger, api: EdgeGenaiHostApi?, messageChannelSuffix: String = "") {
+  /// Sets up an instance of `EdgeAiHostApi` to handle messages through the `binaryMessenger`.
+  static func setUp(binaryMessenger: FlutterBinaryMessenger, api: EdgeAiHostApi?, messageChannelSuffix: String = "") {
     let channelSuffix = messageChannelSuffix.count > 0 ? ".\(messageChannelSuffix)" : ""
-    let checkAvailabilityChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.checkAvailability\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let checkAvailabilityChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.edge_ai.EdgeAiHostApi.checkAvailability\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       checkAvailabilityChannel.setMessageHandler { _, reply in
         api.checkAvailability { result in
@@ -400,12 +400,12 @@ class EdgeGenaiHostApiSetup {
     ///
     /// Event channels can't carry parameters, so callers must invoke this
     /// immediately before listening to the `generateContentChunk` stream.
-    let startGenerateContentChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.startGenerateContent\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    let startGenerateContentChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.edge_ai.EdgeAiHostApi.startGenerateContent\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
     if let api = api {
       startGenerateContentChannel.setMessageHandler { message, reply in
         let args = message as! [Any?]
         let promptArg = args[0] as! String
-        let optionsArg: EdgeGenaiGenerationOptions? = nilOrValue(args[1])
+        let optionsArg: EdgeAiGenerationOptions? = nilOrValue(args[1])
         do {
           try api.startGenerateContent(prompt: promptArg, options: optionsArg)
           reply(wrapResult(nil))
@@ -468,15 +468,15 @@ class PigeonEventSink<ReturnType> {
 
 }
 
-class DownloadProgressStreamHandler: PigeonEventChannelWrapper<EdgeGenaiDownloadProgress> {
+class DownloadProgressStreamHandler: PigeonEventChannelWrapper<EdgeAiDownloadProgress> {
   static func register(with messenger: FlutterBinaryMessenger,
                       instanceName: String = "",
                       streamHandler: DownloadProgressStreamHandler) {
-    var channelName = "dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.downloadProgress"
+    var channelName = "dev.flutter.pigeon.edge_ai.EdgeAiEventApi.downloadProgress"
     if !instanceName.isEmpty {
       channelName += ".\(instanceName)"
     }
-    let internalStreamHandler = PigeonStreamHandler<EdgeGenaiDownloadProgress>(wrapper: streamHandler)
+    let internalStreamHandler = PigeonStreamHandler<EdgeAiDownloadProgress>(wrapper: streamHandler)
     let channel = FlutterEventChannel(name: channelName, binaryMessenger: messenger, codec: messagesPigeonMethodCodec)
     channel.setStreamHandler(internalStreamHandler)
   }
@@ -486,7 +486,7 @@ class GenerateContentChunkStreamHandler: PigeonEventChannelWrapper<String> {
   static func register(with messenger: FlutterBinaryMessenger,
                       instanceName: String = "",
                       streamHandler: GenerateContentChunkStreamHandler) {
-    var channelName = "dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.generateContentChunk"
+    var channelName = "dev.flutter.pigeon.edge_ai.EdgeAiEventApi.generateContentChunk"
     if !instanceName.isEmpty {
       channelName += ".\(instanceName)"
     }

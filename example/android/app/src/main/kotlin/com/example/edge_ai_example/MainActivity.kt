@@ -1,4 +1,4 @@
-package com.example.edge_genai_example
+package com.example.edge_ai_example
 
 import io.flutter.embedding.android.FlutterActivity
 

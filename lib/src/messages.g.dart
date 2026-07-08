@@ -98,7 +98,7 @@ int _deepHash(Object? value) {
 
 
 /// The availability of the on-device generative AI model.
-enum EdgeGenaiAvailability {
+enum EdgeAiAvailability {
   /// The model is available and ready to use.
   available,
   /// The device supports the model, but it still needs to download (for
@@ -113,7 +113,7 @@ enum EdgeGenaiAvailability {
 }
 
 /// The status of an on-device model download.
-enum EdgeGenaiDownloadStatus {
+enum EdgeAiDownloadStatus {
   /// The download has started.
   started,
   /// The download is in progress.
@@ -125,8 +125,8 @@ enum EdgeGenaiDownloadStatus {
 /// Optional parameters controlling how the model generates its response.
 ///
 /// Only fields supported by both Android and iOS are exposed here.
-class EdgeGenaiGenerationOptions {
-  EdgeGenaiGenerationOptions({
+class EdgeAiGenerationOptions {
+  EdgeAiGenerationOptions({
     this.temperature,
     this.maxOutputTokens,
   });
@@ -148,9 +148,9 @@ class EdgeGenaiGenerationOptions {
   Object encode() {
     return _toList();  }
 
-  static EdgeGenaiGenerationOptions decode(Object result) {
+  static EdgeAiGenerationOptions decode(Object result) {
     result as List<Object?>;
-    return EdgeGenaiGenerationOptions(
+    return EdgeAiGenerationOptions(
       temperature: result[0] as double?,
       maxOutputTokens: result[1] as int?,
     );
@@ -159,7 +159,7 @@ class EdgeGenaiGenerationOptions {
   @override
   // ignore: avoid_equals_and_hash_code_on_mutable_classes
   bool operator ==(Object other) {
-    if (other is! EdgeGenaiGenerationOptions || other.runtimeType != runtimeType) {
+    if (other is! EdgeAiGenerationOptions || other.runtimeType != runtimeType) {
       return false;
     }
     if (identical(this, other)) {
@@ -174,22 +174,22 @@ class EdgeGenaiGenerationOptions {
 
   @override
   String toString() {
-    return 'EdgeGenaiGenerationOptions(temperature: $temperature, maxOutputTokens: $maxOutputTokens)';
+    return 'EdgeAiGenerationOptions(temperature: $temperature, maxOutputTokens: $maxOutputTokens)';
   }
 }
 
 /// A single download progress update.
-class EdgeGenaiDownloadProgress {
-  EdgeGenaiDownloadProgress({
+class EdgeAiDownloadProgress {
+  EdgeAiDownloadProgress({
     required this.status,
     this.bytesDownloaded,
   });
 
   /// The current status of the download.
-  EdgeGenaiDownloadStatus status;
+  EdgeAiDownloadStatus status;
 
   /// The total number of bytes downloaded so far. Only populated when
-  /// [status] is [EdgeGenaiDownloadStatus.inProgress].
+  /// [status] is [EdgeAiDownloadStatus.inProgress].
   int? bytesDownloaded;
 
   List<Object?> _toList() {
@@ -202,10 +202,10 @@ class EdgeGenaiDownloadProgress {
   Object encode() {
     return _toList();  }
 
-  static EdgeGenaiDownloadProgress decode(Object result) {
+  static EdgeAiDownloadProgress decode(Object result) {
     result as List<Object?>;
-    return EdgeGenaiDownloadProgress(
-      status: result[0]! as EdgeGenaiDownloadStatus,
+    return EdgeAiDownloadProgress(
+      status: result[0]! as EdgeAiDownloadStatus,
       bytesDownloaded: result[1] as int?,
     );
   }
@@ -213,7 +213,7 @@ class EdgeGenaiDownloadProgress {
   @override
   // ignore: avoid_equals_and_hash_code_on_mutable_classes
   bool operator ==(Object other) {
-    if (other is! EdgeGenaiDownloadProgress || other.runtimeType != runtimeType) {
+    if (other is! EdgeAiDownloadProgress || other.runtimeType != runtimeType) {
       return false;
     }
     if (identical(this, other)) {
@@ -228,7 +228,7 @@ class EdgeGenaiDownloadProgress {
 
   @override
   String toString() {
-    return 'EdgeGenaiDownloadProgress(status: $status, bytesDownloaded: $bytesDownloaded)';
+    return 'EdgeAiDownloadProgress(status: $status, bytesDownloaded: $bytesDownloaded)';
   }
 }
 
@@ -240,16 +240,16 @@ class _PigeonCodec extends StandardMessageCodec {
     if (value is int) {
       buffer.putUint8(4);
       buffer.putInt64(value);
-    }    else if (value is EdgeGenaiAvailability) {
+    }    else if (value is EdgeAiAvailability) {
       buffer.putUint8(129);
       writeValue(buffer, value.index);
-    }    else if (value is EdgeGenaiDownloadStatus) {
+    }    else if (value is EdgeAiDownloadStatus) {
       buffer.putUint8(130);
       writeValue(buffer, value.index);
-    }    else if (value is EdgeGenaiGenerationOptions) {
+    }    else if (value is EdgeAiGenerationOptions) {
       buffer.putUint8(131);
       writeValue(buffer, value.encode());
-    }    else if (value is EdgeGenaiDownloadProgress) {
+    }    else if (value is EdgeAiDownloadProgress) {
       buffer.putUint8(132);
       writeValue(buffer, value.encode());
     } else {
@@ -262,14 +262,14 @@ class _PigeonCodec extends StandardMessageCodec {
     switch (type) {
       case 129:
         final value = readValue(buffer) as int?;
-        return value == null ? null : EdgeGenaiAvailability.values[value];
+        return value == null ? null : EdgeAiAvailability.values[value];
       case 130:
         final value = readValue(buffer) as int?;
-        return value == null ? null : EdgeGenaiDownloadStatus.values[value];
+        return value == null ? null : EdgeAiDownloadStatus.values[value];
       case 131:
-        return EdgeGenaiGenerationOptions.decode(readValue(buffer)!);
+        return EdgeAiGenerationOptions.decode(readValue(buffer)!);
       case 132:
-        return EdgeGenaiDownloadProgress.decode(readValue(buffer)!);
+        return EdgeAiDownloadProgress.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
@@ -278,11 +278,11 @@ class _PigeonCodec extends StandardMessageCodec {
 
 const StandardMethodCodec pigeonMethodCodec = StandardMethodCodec(_PigeonCodec());
 
-class EdgeGenaiHostApi {
-  /// Constructor for [EdgeGenaiHostApi]. The [binaryMessenger] named argument is
+class EdgeAiHostApi {
+  /// Constructor for [EdgeAiHostApi]. The [binaryMessenger] named argument is
   /// available for dependency injection. If it is left null, the default
   /// BinaryMessenger will be used which routes to the host platform.
-  EdgeGenaiHostApi({BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''})
+  EdgeAiHostApi({BinaryMessenger? binaryMessenger, String messageChannelSuffix = ''})
       : pigeonVar_binaryMessenger = binaryMessenger,
         pigeonVar_messageChannelSuffix = messageChannelSuffix.isNotEmpty ? '.$messageChannelSuffix' : '';
   final BinaryMessenger? pigeonVar_binaryMessenger;
@@ -291,8 +291,8 @@ class EdgeGenaiHostApi {
 
   final String pigeonVar_messageChannelSuffix;
 
-  Future<EdgeGenaiAvailability> checkAvailability() async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.checkAvailability$pigeonVar_messageChannelSuffix';
+  Future<EdgeAiAvailability> checkAvailability() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.edge_ai.EdgeAiHostApi.checkAvailability$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -307,7 +307,7 @@ class EdgeGenaiHostApi {
         isNullValid: false,
     )
     ;
-    return pigeonVar_replyValue! as EdgeGenaiAvailability;
+    return pigeonVar_replyValue! as EdgeAiAvailability;
   }
 
   /// Stores [prompt] and [options] for the next `generateContentChunk` event
@@ -315,8 +315,8 @@ class EdgeGenaiHostApi {
   ///
   /// Event channels can't carry parameters, so callers must invoke this
   /// immediately before listening to the `generateContentChunk` stream.
-  Future<void> startGenerateContent(String prompt, EdgeGenaiGenerationOptions? options) async {
-    final pigeonVar_channelName = 'dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.startGenerateContent$pigeonVar_messageChannelSuffix';
+  Future<void> startGenerateContent(String prompt, EdgeAiGenerationOptions? options) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.edge_ai.EdgeAiHostApi.startGenerateContent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
@@ -334,14 +334,14 @@ class EdgeGenaiHostApi {
   }
 }
 
-Stream<EdgeGenaiDownloadProgress> downloadProgress( {String instanceName = ''}) {
+Stream<EdgeAiDownloadProgress> downloadProgress( {String instanceName = ''}) {
   if (instanceName.isNotEmpty) {
     instanceName = '.$instanceName';
   }
   final EventChannel downloadProgressChannel =
-      EventChannel('dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.downloadProgress$instanceName', pigeonMethodCodec);
+      EventChannel('dev.flutter.pigeon.edge_ai.EdgeAiEventApi.downloadProgress$instanceName', pigeonMethodCodec);
   return downloadProgressChannel.receiveBroadcastStream().map((dynamic event) {
-    return event as EdgeGenaiDownloadProgress;
+    return event as EdgeAiDownloadProgress;
   });
 }
     
@@ -350,7 +350,7 @@ Stream<String> generateContentChunk( {String instanceName = ''}) {
     instanceName = '.$instanceName';
   }
   final EventChannel generateContentChunkChannel =
-      EventChannel('dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.generateContentChunk$instanceName', pigeonMethodCodec);
+      EventChannel('dev.flutter.pigeon.edge_ai.EdgeAiEventApi.generateContentChunk$instanceName', pigeonMethodCodec);
   return generateContentChunkChannel.receiveBroadcastStream().map((dynamic event) {
     return event as String;
   });

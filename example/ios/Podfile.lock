@@ -1,25 +1,25 @@
 PODS:
-  - edge_genai (0.0.1):
+  - edge_ai (0.0.1):
     - Flutter
   - Flutter (1.0.0)
   - integration_test (0.0.1):
     - Flutter
 
 DEPENDENCIES:
-  - edge_genai (from `.symlinks/plugins/edge_genai/ios`)
+  - edge_ai (from `.symlinks/plugins/edge_ai/ios`)
   - Flutter (from `Flutter`)
   - integration_test (from `.symlinks/plugins/integration_test/ios`)
 
 EXTERNAL SOURCES:
-  edge_genai:
-    :path: ".symlinks/plugins/edge_genai/ios"
+  edge_ai:
+    :path: ".symlinks/plugins/edge_ai/ios"
   Flutter:
     :path: Flutter
   integration_test:
     :path: ".symlinks/plugins/integration_test/ios"
 
 SPEC CHECKSUMS:
-  edge_genai: 99f423c10f11a73683244493cd1c5584cd0edc4a
+  edge_ai: eb9adc68c0e7f80509c7bf671855fcf6f0142621
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
 

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:edge_genai/edge_genai.dart';
+import 'package:edge_ai/edge_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -16,11 +16,11 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  EdgeGenaiAvailability? _availability;
-  EdgeGenaiDownloadProgress? _downloadProgress;
+  EdgeAiAvailability? _availability;
+  EdgeAiDownloadProgress? _downloadProgress;
   String? _generatedContent;
   bool _isGenerating = false;
-  final _edgeGenaiPlugin = EdgeGenai();
+  final _edgeGenaiPlugin = EdgeAi();
   final _promptController = TextEditingController(
     text: 'Write a 3 sentence story about a magical dog.',
   );
@@ -38,11 +38,11 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initPlatformState() async {
-    EdgeGenaiAvailability availability;
+    EdgeAiAvailability availability;
     try {
       availability = await _edgeGenaiPlugin.checkAvailability();
     } on PlatformException {
-      availability = EdgeGenaiAvailability.unavailable;
+      availability = EdgeAiAvailability.unavailable;
     }
 
     if (!mounted) return;
@@ -94,7 +94,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    final canDownload = _availability == EdgeGenaiAvailability.downloadable;
+    final canDownload = _availability == EdgeAiAvailability.downloadable;
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(title: const Text('Plugin example app')),

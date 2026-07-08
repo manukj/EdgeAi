@@ -1,4 +1,4 @@
-# edge_genai
+# edge_ai
 
 A new Flutter plugin project.
 

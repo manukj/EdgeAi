@@ -1,5 +1,5 @@
-import 'package:edge_genai/edge_genai_method_channel.dart';
-import 'package:edge_genai/src/messages.g.dart';
+import 'package:edge_ai/edge_ai_method_channel.dart';
+import 'package:edge_ai/src/messages.g.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -9,13 +9,13 @@ void main() {
   final messenger = TestDefaultBinaryMessengerBinding
       .instance
       .defaultBinaryMessenger;
-  MethodChannelEdgeGenai platform = MethodChannelEdgeGenai();
+  MethodChannelEdgeAi platform = MethodChannelEdgeAi();
 
   void mockChannel(String method, Object? response) {
     messenger.setMockMessageHandler(
-      'dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.$method',
+      'dev.flutter.pigeon.edge_ai.EdgeAiHostApi.$method',
       (ByteData? message) async {
-        return EdgeGenaiHostApi.pigeonChannelCodec.encodeMessage(<Object?>[
+        return EdgeAiHostApi.pigeonChannelCodec.encodeMessage(<Object?>[
           response,
         ]);
       },
@@ -23,7 +23,7 @@ void main() {
   }
 
   setUp(() {
-    mockChannel('checkAvailability', EdgeGenaiAvailability.available);
+    mockChannel('checkAvailability', EdgeAiAvailability.available);
   });
 
   tearDown(() {
@@ -33,15 +33,15 @@ void main() {
   test('checkAvailability', () async {
     expect(
       await platform.checkAvailability(),
-      EdgeGenaiAvailability.available,
+      EdgeAiAvailability.available,
     );
   });
 
   test('downloadModel', () async {
     const channelName =
-        'dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.downloadProgress';
-    final progress = EdgeGenaiDownloadProgress(
-      status: EdgeGenaiDownloadStatus.completed,
+        'dev.flutter.pigeon.edge_ai.EdgeAiEventApi.downloadProgress';
+    final progress = EdgeAiDownloadProgress(
+      status: EdgeAiDownloadStatus.completed,
     );
 
     messenger.setMockMessageHandler(channelName, (ByteData? message) async {
@@ -60,12 +60,12 @@ void main() {
 
   test('generateContent', () async {
     const hostChannel =
-        'dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.startGenerateContent';
+        'dev.flutter.pigeon.edge_ai.EdgeAiHostApi.startGenerateContent';
     const eventChannel =
-        'dev.flutter.pigeon.edge_genai.EdgeGenaiEventApi.generateContentChunk';
+        'dev.flutter.pigeon.edge_ai.EdgeAiEventApi.generateContentChunk';
 
     messenger.setMockMessageHandler(hostChannel, (ByteData? message) async {
-      return EdgeGenaiHostApi.pigeonChannelCodec.encodeMessage(<Object?>[
+      return EdgeAiHostApi.pigeonChannelCodec.encodeMessage(<Object?>[
         null,
       ]);
     });

@@ -8,7 +8,7 @@ val flutterSdkPath =
         ?: error("flutter.sdk is not set in local.properties")
 val flutterEngineVersion = file("$flutterSdkPath/bin/internal/engine.version").readText().trim()
 
-group = "com.example.edge_genai"
+group = "com.example.edge_ai"
 version = "1.0-SNAPSHOT"
 
 buildscript {
@@ -37,7 +37,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.edge_genai"
+    namespace = "com.example.edge_ai"
 
     compileSdk = 36
 

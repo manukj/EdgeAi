@@ -1,4 +1,4 @@
-package com.example.edge_genai
+package com.example.edge_ai
 
 import com.google.mlkit.genai.common.DownloadStatus
 import com.google.mlkit.genai.common.FeatureStatus
@@ -11,40 +11,40 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-/** EdgeGenaiPlugin */
-class EdgeGenaiPlugin :
+/** EdgeAiPlugin */
+class EdgeAiPlugin :
     FlutterPlugin,
-    EdgeGenaiHostApi {
+    EdgeAiHostApi {
     private var pluginBinding: FlutterPlugin.FlutterPluginBinding? = null
     private val scope = CoroutineScope(Dispatchers.Main)
     private val generativeModel by lazy { Generation.getClient() }
     private var pendingPrompt: String? = null
-    private var pendingOptions: EdgeGenaiGenerationOptions? = null
+    private var pendingOptions: EdgeAiGenerationOptions? = null
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         pluginBinding = flutterPluginBinding
-        EdgeGenaiHostApi.setUp(flutterPluginBinding.binaryMessenger, this)
+        EdgeAiHostApi.setUp(flutterPluginBinding.binaryMessenger, this)
         DownloadProgressStreamHandler.register(
             flutterPluginBinding.binaryMessenger,
-            EdgeGenaiDownloadProgressStreamHandler(scope, generativeModel),
+            EdgeAiDownloadProgressStreamHandler(scope, generativeModel),
         )
         GenerateContentChunkStreamHandler.register(
             flutterPluginBinding.binaryMessenger,
-            EdgeGenaiGenerateContentStreamHandler(scope, generativeModel) {
+            EdgeAiGenerateContentStreamHandler(scope, generativeModel) {
                 pendingPrompt?.let { it to pendingOptions }
             },
         )
     }
 
-    override fun checkAvailability(callback: (Result<EdgeGenaiAvailability>) -> Unit) {
+    override fun checkAvailability(callback: (Result<EdgeAiAvailability>) -> Unit) {
         scope.launch {
             val availability =
                 try {
                     when (generativeModel.checkStatus()) {
-                        FeatureStatus.AVAILABLE -> EdgeGenaiAvailability.AVAILABLE
+                        FeatureStatus.AVAILABLE -> EdgeAiAvailability.AVAILABLE
                         FeatureStatus.DOWNLOADABLE, FeatureStatus.DOWNLOADING ->
-                            EdgeGenaiAvailability.DOWNLOADABLE
-                        else -> EdgeGenaiAvailability.UNAVAILABLE
+                            EdgeAiAvailability.DOWNLOADABLE
+                        else -> EdgeAiAvailability.UNAVAILABLE
                     }
                 } catch (e: Exception) {
                     callback(Result.failure(e))
@@ -56,44 +56,44 @@ class EdgeGenaiPlugin :
 
     override fun startGenerateContent(
         prompt: String,
-        options: EdgeGenaiGenerationOptions?
+        options: EdgeAiGenerationOptions?
     ) {
         pendingPrompt = prompt
         pendingOptions = options
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        pluginBinding?.let { EdgeGenaiHostApi.setUp(it.binaryMessenger, null) }
+        pluginBinding?.let { EdgeAiHostApi.setUp(it.binaryMessenger, null) }
         pluginBinding = null
     }
 }
 
 /** Triggers the Gemini Nano download when Flutter starts listening, and streams its progress. */
-private class EdgeGenaiDownloadProgressStreamHandler(
+private class EdgeAiDownloadProgressStreamHandler(
     private val scope: CoroutineScope,
     private val generativeModel: GenerativeModel
 ) : DownloadProgressStreamHandler() {
     override fun onListen(
         p0: Any?,
-        sink: PigeonEventSink<EdgeGenaiDownloadProgress>
+        sink: PigeonEventSink<EdgeAiDownloadProgress>
     ) {
         scope.launch {
             generativeModel.download().collect { status ->
                 when (status) {
                     is DownloadStatus.DownloadStarted ->
                         sink.success(
-                            EdgeGenaiDownloadProgress(EdgeGenaiDownloadStatus.STARTED, null)
+                            EdgeAiDownloadProgress(EdgeAiDownloadStatus.STARTED, null)
                         )
                     is DownloadStatus.DownloadProgress ->
                         sink.success(
-                            EdgeGenaiDownloadProgress(
-                                EdgeGenaiDownloadStatus.IN_PROGRESS,
+                            EdgeAiDownloadProgress(
+                                EdgeAiDownloadStatus.IN_PROGRESS,
                                 status.totalBytesDownloaded
                             )
                         )
                     is DownloadStatus.DownloadCompleted -> {
                         sink.success(
-                            EdgeGenaiDownloadProgress(EdgeGenaiDownloadStatus.COMPLETED, null)
+                            EdgeAiDownloadProgress(EdgeAiDownloadStatus.COMPLETED, null)
                         )
                         sink.endOfStream()
                     }
@@ -109,10 +109,10 @@ private class EdgeGenaiDownloadProgressStreamHandler(
  * Starts generation for the prompt/options stashed via `startGenerateContent` when Flutter
  * starts listening, and streams the cumulative response text as it's generated.
  */
-private class EdgeGenaiGenerateContentStreamHandler(
+private class EdgeAiGenerateContentStreamHandler(
     private val scope: CoroutineScope,
     private val generativeModel: GenerativeModel,
-    private val takePendingRequest: () -> Pair<String, EdgeGenaiGenerationOptions?>?
+    private val takePendingRequest: () -> Pair<String, EdgeAiGenerationOptions?>?
 ) : GenerateContentChunkStreamHandler() {
     override fun onListen(
         p0: Any?,
