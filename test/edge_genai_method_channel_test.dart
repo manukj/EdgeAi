@@ -36,4 +36,25 @@ void main() {
       EdgeGenaiAvailability.available,
     );
   });
+
+  test('downloadModel', () async {
+    const channelName =
+        'dev.flutter.pigeon.edge_genai.EdgeGenaiDownloadEventApi.downloadProgress';
+    final progress = EdgeGenaiDownloadProgress(
+      status: EdgeGenaiDownloadStatus.completed,
+    );
+
+    messenger.setMockMessageHandler(channelName, (ByteData? message) async {
+      final call = pigeonMethodCodec.decodeMethodCall(message);
+      if (call.method == 'listen') {
+        final envelope = pigeonMethodCodec.encodeSuccessEnvelope(progress);
+        await messenger.handlePlatformMessage(channelName, envelope, (_) {});
+      }
+      return null;
+    });
+
+    await expectLater(platform.downloadModel(), emits(progress));
+
+    messenger.setMockMessageHandler(channelName, null);
+  });
 }

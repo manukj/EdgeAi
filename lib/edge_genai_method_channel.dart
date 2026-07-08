@@ -11,4 +11,9 @@ class MethodChannelEdgeGenai extends EdgeGenaiPlatform {
   Future<EdgeGenaiAvailability> checkAvailability() {
     return hostApi.checkAvailability();
   }
+
+  @override
+  Stream<EdgeGenaiDownloadProgress> downloadModel() {
+    return downloadProgress();
+  }
 }

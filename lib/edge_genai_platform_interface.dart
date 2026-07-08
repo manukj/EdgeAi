@@ -1,6 +1,7 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'edge_genai_availability.dart';
+import 'edge_genai_download_progress.dart';
 import 'edge_genai_method_channel.dart';
 
 abstract class EdgeGenaiPlatform extends PlatformInterface {
@@ -27,5 +28,11 @@ abstract class EdgeGenaiPlatform extends PlatformInterface {
   /// Checks whether the on-device generative AI model is available.
   Future<EdgeGenaiAvailability> checkAvailability() {
     throw UnimplementedError('checkAvailability() has not been implemented.');
+  }
+
+  /// Triggers the on-device model download (if one is needed) and streams
+  /// progress updates until it completes or fails.
+  Stream<EdgeGenaiDownloadProgress> downloadModel() {
+    throw UnimplementedError('downloadModel() has not been implemented.');
   }
 }

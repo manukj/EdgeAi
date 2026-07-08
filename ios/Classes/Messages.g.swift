@@ -67,6 +67,115 @@ enum MessagesPigeonInternal {
 
     return innerValue is NSNull
   }
+  static func doubleEquals(_ lhs: Double, _ rhs: Double) -> Bool {
+    return (lhs.isNaN && rhs.isNaN) || lhs == rhs
+  }
+
+  static func doubleHash(_ value: Double, _ hasher: inout Hasher) {
+    if value.isNaN {
+      hasher.combine(0x7FF8000000000000)
+    } else {
+      // Normalize -0.0 to 0.0
+      hasher.combine(value == 0 ? 0 : value)
+    }
+  }
+
+  static func deepEquals(_ lhs: Any?, _ rhs: Any?) -> Bool {
+    let cleanLhs = nilOrValue(lhs) as Any?
+    let cleanRhs = nilOrValue(rhs) as Any?
+    switch (cleanLhs, cleanRhs) {
+    case (nil, nil):
+      return true
+
+    case (nil, _), (_, nil):
+      return false
+
+    case (let lhs as AnyObject, let rhs as AnyObject) where lhs === rhs:
+      return true
+
+    case is (Void, Void):
+      return true
+
+    case (let lhsArray, let rhsArray) as ([Any?], [Any?]):
+      guard lhsArray.count == rhsArray.count else { return false }
+      for (index, element) in lhsArray.enumerated() {
+        if !deepEquals(element, rhsArray[index]) {
+          return false
+        }
+      }
+      return true
+
+    case (let lhsArray, let rhsArray) as ([Double], [Double]):
+      guard lhsArray.count == rhsArray.count else { return false }
+      for (index, element) in lhsArray.enumerated() {
+        if !doubleEquals(element, rhsArray[index]) {
+          return false
+        }
+      }
+      return true
+
+    case (let lhsDictionary, let rhsDictionary) as ([AnyHashable: Any?], [AnyHashable: Any?]):
+      guard lhsDictionary.count == rhsDictionary.count else { return false }
+      for (lhsKey, lhsValue) in lhsDictionary {
+        var found = false
+        for (rhsKey, rhsValue) in rhsDictionary {
+          if deepEquals(lhsKey, rhsKey) {
+            if deepEquals(lhsValue, rhsValue) {
+              found = true
+              break
+            } else {
+              return false
+            }
+          }
+        }
+        if !found { return false }
+      }
+      return true
+
+    case (let lhs as Double, let rhs as Double):
+      return doubleEquals(lhs, rhs)
+
+    case (let lhsHashable, let rhsHashable) as (AnyHashable, AnyHashable):
+      return lhsHashable == rhsHashable
+
+    default:
+      return false
+    }
+  }
+
+  static func deepHash(value: Any?, hasher: inout Hasher) {
+    let cleanValue = nilOrValue(value) as Any?
+    if let cleanValue = cleanValue {
+      if let doubleValue = cleanValue as? Double {
+        doubleHash(doubleValue, &hasher)
+      } else if let valueList = cleanValue as? [Any?] {
+        for item in valueList {
+          deepHash(value: item, hasher: &hasher)
+        }
+      } else if let valueList = cleanValue as? [Double] {
+        for item in valueList {
+          doubleHash(item, &hasher)
+        }
+      } else if let valueDict = cleanValue as? [AnyHashable: Any?] {
+        var result = 0
+        for (key, value) in valueDict {
+          var entryKeyHasher = Hasher()
+          deepHash(value: key, hasher: &entryKeyHasher)
+          var entryValueHasher = Hasher()
+          deepHash(value: value, hasher: &entryValueHasher)
+          result = result &+ ((entryKeyHasher.finalize() &* 31) ^ entryValueHasher.finalize())
+        }
+        hasher.combine(result)
+      } else if let hashableValue = cleanValue as? AnyHashable {
+        hasher.combine(hashableValue)
+      } else {
+        hasher.combine(String(describing: cleanValue))
+      }
+    } else {
+      hasher.combine(0)
+    }
+  }
+
 }
 
 private func nilOrValue<T>(_ value: Any?) -> T? {
@@ -90,6 +199,61 @@ enum EdgeGenaiAvailability: Int, CaseIterable {
   case unavailable = 3
 }
 
+/// The status of an on-device model download.
+enum EdgeGenaiDownloadStatus: Int, CaseIterable {
+  /// The download has started.
+  case started = 0
+  /// The download is in progress.
+  case inProgress = 1
+  /// The download finished and the model is ready to use.
+  case completed = 2
+}
+
+/// A single download progress update.
+///
+/// Generated class from Pigeon that represents data sent in messages.
+struct EdgeGenaiDownloadProgress: Hashable, CustomStringConvertible {
+  /// The current status of the download.
+  var status: EdgeGenaiDownloadStatus
+  /// The total number of bytes downloaded so far. Only populated when
+  /// [status] is [EdgeGenaiDownloadStatus.inProgress].
+  var bytesDownloaded: Int64? = nil
+
+
+  // swift-format-ignore: AlwaysUseLowerCamelCase
+  static func fromList(_ pigeonVar_list: [Any?]) -> EdgeGenaiDownloadProgress? {
+    let status = pigeonVar_list[0] as! EdgeGenaiDownloadStatus
+    let bytesDownloaded: Int64? = nilOrValue(pigeonVar_list[1])
+
+    return EdgeGenaiDownloadProgress(
+      status: status,
+      bytesDownloaded: bytesDownloaded
+    )
+  }
+  func toList() -> [Any?] {
+    return [
+      status,
+      bytesDownloaded,
+    ]
+  }
+  static func == (lhs: EdgeGenaiDownloadProgress, rhs: EdgeGenaiDownloadProgress) -> Bool {
+    if Swift.type(of: lhs) != Swift.type(of: rhs) {
+      return false
+    }
+    return MessagesPigeonInternal.deepEquals(lhs.status, rhs.status) && MessagesPigeonInternal.deepEquals(lhs.bytesDownloaded, rhs.bytesDownloaded)
+  }
+
+  func hash(into hasher: inout Hasher) {
+    hasher.combine("EdgeGenaiDownloadProgress")
+    MessagesPigeonInternal.deepHash(value: status, hasher: &hasher)
+    MessagesPigeonInternal.deepHash(value: bytesDownloaded, hasher: &hasher)
+  }
+
+  public var description: String {
+    return "EdgeGenaiDownloadProgress(status: \(String(describing: status)), bytesDownloaded: \(String(describing: bytesDownloaded)))"
+  }
+}
+
 private class MessagesPigeonCodecReader: FlutterStandardReader {
   override func readValue(ofType type: UInt8) -> Any? {
     switch type {
@@ -99,6 +263,14 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
         return EdgeGenaiAvailability(rawValue: enumResultAsInt)
       }
       return nil
+    case 130:
+      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
+      if let enumResultAsInt = enumResultAsInt {
+        return EdgeGenaiDownloadStatus(rawValue: enumResultAsInt)
+      }
+      return nil
+    case 131:
+      return EdgeGenaiDownloadProgress.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
     }
@@ -110,6 +282,12 @@ private class MessagesPigeonCodecWriter: FlutterStandardWriter {
     if let value = value as? EdgeGenaiAvailability {
       super.writeByte(129)
       super.writeValue(value.rawValue)
+    } else if let value = value as? EdgeGenaiDownloadStatus {
+      super.writeByte(130)
+      super.writeValue(value.rawValue)
+    } else if let value = value as? EdgeGenaiDownloadProgress {
+      super.writeByte(131)
+      super.writeValue(value.toList())
     } else {
       super.writeValue(value)
     }
@@ -129,6 +307,8 @@ private class MessagesPigeonCodecReaderWriter: FlutterStandardReaderWriter {
 class MessagesPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
   static let shared = MessagesPigeonCodec(readerWriter: MessagesPigeonCodecReaderWriter())
 }
+
+var messagesPigeonMethodCodec = FlutterStandardMethodCodec(readerWriter: MessagesPigeonCodecReaderWriter());
 
 
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
@@ -159,3 +339,67 @@ class EdgeGenaiHostApiSetup {
     }
   }
 }
+
+private class PigeonStreamHandler<ReturnType>: NSObject, FlutterStreamHandler {
+  private let wrapper: PigeonEventChannelWrapper<ReturnType>
+  private var pigeonSink: PigeonEventSink<ReturnType>? = nil
+
+  init(wrapper: PigeonEventChannelWrapper<ReturnType>) {
+    self.wrapper = wrapper
+  }
+
+  func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink)
+    -> FlutterError?
+  {
+    pigeonSink = PigeonEventSink<ReturnType>(events)
+    wrapper.onListen(withArguments: arguments, sink: pigeonSink!)
+    return nil
+  }
+
+  func onCancel(withArguments arguments: Any?) -> FlutterError? {
+    pigeonSink = nil
+    wrapper.onCancel(withArguments: arguments)
+    return nil
+  }
+}
+
+class PigeonEventChannelWrapper<ReturnType> {
+  func onListen(withArguments arguments: Any?, sink: PigeonEventSink<ReturnType>) {}
+  func onCancel(withArguments arguments: Any?) {}
+}
+
+class PigeonEventSink<ReturnType> {
+  private let sink: FlutterEventSink
+
+  init(_ sink: @escaping FlutterEventSink) {
+    self.sink = sink
+  }
+
+  func success(_ value: ReturnType) {
+    sink(value)
+  }
+
+  func error(code: String, message: String?, details: Any?) {
+    sink(FlutterError(code: code, message: message, details: details))
+  }
+
+  func endOfStream() {
+    sink(FlutterEndOfEventStream)
+  }
+
+}
+
+class DownloadProgressStreamHandler: PigeonEventChannelWrapper<EdgeGenaiDownloadProgress> {
+  static func register(with messenger: FlutterBinaryMessenger,
+                      instanceName: String = "",
+                      streamHandler: DownloadProgressStreamHandler) {
+    var channelName = "dev.flutter.pigeon.edge_genai.EdgeGenaiDownloadEventApi.downloadProgress"
+    if !instanceName.isEmpty {
+      channelName += ".\(instanceName)"
+    }
+    let internalStreamHandler = PigeonStreamHandler<EdgeGenaiDownloadProgress>(wrapper: streamHandler)
+    let channel = FlutterEventChannel(name: channelName, binaryMessenger: messenger, codec: messagesPigeonMethodCodec)
+    channel.setStreamHandler(internalStreamHandler)
+  }
+}
+      

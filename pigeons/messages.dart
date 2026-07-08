@@ -34,3 +34,38 @@ abstract class EdgeGenaiHostApi {
   @async
   EdgeGenaiAvailability checkAvailability();
 }
+
+/// The status of an on-device model download.
+enum EdgeGenaiDownloadStatus {
+  /// The download has started.
+  started,
+
+  /// The download is in progress.
+  inProgress,
+
+  /// The download finished and the model is ready to use.
+  completed,
+}
+
+/// A single download progress update.
+class EdgeGenaiDownloadProgress {
+  EdgeGenaiDownloadProgress({required this.status, this.bytesDownloaded});
+
+  /// The current status of the download.
+  final EdgeGenaiDownloadStatus status;
+
+  /// The total number of bytes downloaded so far. Only populated when
+  /// [status] is [EdgeGenaiDownloadStatus.inProgress].
+  final int? bytesDownloaded;
+}
+
+@EventChannelApi()
+abstract class EdgeGenaiDownloadEventApi {
+  /// Triggers the on-device model download (if one is needed) and streams
+  /// progress updates until it completes or fails.
+  ///
+  /// On iOS there's nothing for the app to download \u2014 Apple Intelligence is
+  /// enabled system-wide in Settings \u2014 so this immediately emits a single
+  /// `completed` event.
+  EdgeGenaiDownloadProgress downloadProgress();
+}

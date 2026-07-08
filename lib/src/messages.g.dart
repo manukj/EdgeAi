@@ -34,6 +34,68 @@ Object? _extractReplyValueOrThrow(
   return replyList.firstOrNull;
 }
 
+bool _deepEquals(Object? a, Object? b) {
+  if (identical(a, b)) {
+    return true;
+  }
+  if (a is double && b is double) {
+    if (a.isNaN && b.isNaN) {
+      return true;
+    }
+    return a == b;
+  }
+  if (a is List && b is List) {
+    return a.length == b.length &&
+        a.indexed
+            .every(((int, dynamic) item) => _deepEquals(item.$2, b[item.$1]));
+  }
+  if (a is Map && b is Map) {
+    if (a.length != b.length) {
+      return false;
+    }
+    for (final MapEntry<Object?, Object?> entryA in a.entries) {
+      bool found = false;
+      for (final MapEntry<Object?, Object?> entryB in b.entries) {
+        if (_deepEquals(entryA.key, entryB.key)) {
+          if (_deepEquals(entryA.value, entryB.value)) {
+            found = true;
+            break;
+          } else {
+            return false;
+          }
+        }
+      }
+      if (!found) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return a == b;
+}
+
+int _deepHash(Object? value) {
+  if (value is List) {
+    return Object.hashAll(value.map(_deepHash));
+  }
+  if (value is Map) {
+    int result = 0;
+    for (final MapEntry<Object?, Object?> entry in value.entries) {
+      result += (_deepHash(entry.key) * 31) ^ _deepHash(entry.value);
+    }
+    return result;
+  }
+  if (value is double && value.isNaN) {
+    // Normalize NaN to a consistent hash.
+    return 0x7FF8000000000000.hashCode;
+  }
+  if (value is double && value == 0.0) {
+    // Normalize -0.0 to 0.0 so they have the same hash code.
+    return 0.0.hashCode;
+  }
+  return value.hashCode;
+}
+
 
 /// The availability of the on-device generative AI model.
 enum EdgeGenaiAvailability {
@@ -50,6 +112,70 @@ enum EdgeGenaiAvailability {
   unavailable,
 }
 
+/// The status of an on-device model download.
+enum EdgeGenaiDownloadStatus {
+  /// The download has started.
+  started,
+  /// The download is in progress.
+  inProgress,
+  /// The download finished and the model is ready to use.
+  completed,
+}
+
+/// A single download progress update.
+class EdgeGenaiDownloadProgress {
+  EdgeGenaiDownloadProgress({
+    required this.status,
+    this.bytesDownloaded,
+  });
+
+  /// The current status of the download.
+  EdgeGenaiDownloadStatus status;
+
+  /// The total number of bytes downloaded so far. Only populated when
+  /// [status] is [EdgeGenaiDownloadStatus.inProgress].
+  int? bytesDownloaded;
+
+  List<Object?> _toList() {
+    return <Object?>[
+      status,
+      bytesDownloaded,
+    ];
+  }
+
+  Object encode() {
+    return _toList();  }
+
+  static EdgeGenaiDownloadProgress decode(Object result) {
+    result as List<Object?>;
+    return EdgeGenaiDownloadProgress(
+      status: result[0]! as EdgeGenaiDownloadStatus,
+      bytesDownloaded: result[1] as int?,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! EdgeGenaiDownloadProgress || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(status, other.status) && _deepEquals(bytesDownloaded, other.bytesDownloaded);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'EdgeGenaiDownloadProgress(status: $status, bytesDownloaded: $bytesDownloaded)';
+  }
+}
+
 
 class _PigeonCodec extends StandardMessageCodec {
   const _PigeonCodec();
@@ -61,6 +187,12 @@ class _PigeonCodec extends StandardMessageCodec {
     }    else if (value is EdgeGenaiAvailability) {
       buffer.putUint8(129);
       writeValue(buffer, value.index);
+    }    else if (value is EdgeGenaiDownloadStatus) {
+      buffer.putUint8(130);
+      writeValue(buffer, value.index);
+    }    else if (value is EdgeGenaiDownloadProgress) {
+      buffer.putUint8(131);
+      writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
     }
@@ -72,11 +204,18 @@ class _PigeonCodec extends StandardMessageCodec {
       case 129:
         final value = readValue(buffer) as int?;
         return value == null ? null : EdgeGenaiAvailability.values[value];
+      case 130:
+        final value = readValue(buffer) as int?;
+        return value == null ? null : EdgeGenaiDownloadStatus.values[value];
+      case 131:
+        return EdgeGenaiDownloadProgress.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
     }
   }
 }
+
+const StandardMethodCodec pigeonMethodCodec = StandardMethodCodec(_PigeonCodec());
 
 class EdgeGenaiHostApi {
   /// Constructor for [EdgeGenaiHostApi]. The [binaryMessenger] named argument is
@@ -110,3 +249,15 @@ class EdgeGenaiHostApi {
     return pigeonVar_replyValue! as EdgeGenaiAvailability;
   }
 }
+
+Stream<EdgeGenaiDownloadProgress> downloadProgress( {String instanceName = ''}) {
+  if (instanceName.isNotEmpty) {
+    instanceName = '.$instanceName';
+  }
+  final EventChannel downloadProgressChannel =
+      EventChannel('dev.flutter.pigeon.edge_genai.EdgeGenaiDownloadEventApi.downloadProgress$instanceName', pigeonMethodCodec);
+  return downloadProgressChannel.receiveBroadcastStream().map((dynamic event) {
+    return event as EdgeGenaiDownloadProgress;
+  });
+}
+    

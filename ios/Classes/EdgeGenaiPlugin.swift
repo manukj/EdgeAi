@@ -8,6 +8,8 @@ public class EdgeGenaiPlugin: NSObject, FlutterPlugin, EdgeGenaiHostApi {
   public static func register(with registrar: FlutterPluginRegistrar) {
     let instance = EdgeGenaiPlugin()
     EdgeGenaiHostApiSetup.setUp(binaryMessenger: registrar.messenger(), api: instance)
+    DownloadProgressStreamHandler.register(
+      with: registrar.messenger(), streamHandler: EdgeGenaiDownloadProgressStreamHandler())
   }
 
   func checkAvailability(completion: @escaping (Result<EdgeGenaiAvailability, Error>) -> Void) {
@@ -33,5 +35,16 @@ public class EdgeGenaiPlugin: NSObject, FlutterPlugin, EdgeGenaiHostApi {
       }
     #endif
     completion(.success(.unavailable))
+  }
+}
+
+/// There's nothing for the app to download on iOS — Apple Intelligence is
+/// enabled system-wide in Settings — so this immediately reports completion.
+private class EdgeGenaiDownloadProgressStreamHandler: DownloadProgressStreamHandler {
+  override func onListen(
+    withArguments arguments: Any?, sink: PigeonEventSink<EdgeGenaiDownloadProgress>
+  ) {
+    sink.success(EdgeGenaiDownloadProgress(status: .completed, bytesDownloaded: nil))
+    sink.endOfStream()
   }
 }

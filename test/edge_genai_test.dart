@@ -10,6 +10,11 @@ class MockEdgeGenaiPlatform
   @override
   Future<EdgeGenaiAvailability> checkAvailability() =>
       Future.value(EdgeGenaiAvailability.available);
+
+  @override
+  Stream<EdgeGenaiDownloadProgress> downloadModel() => Stream.value(
+    EdgeGenaiDownloadProgress(status: EdgeGenaiDownloadStatus.completed),
+  );
 }
 
 void main() {
@@ -27,6 +32,17 @@ void main() {
     expect(
       await edgeGenaiPlugin.checkAvailability(),
       EdgeGenaiAvailability.available,
+    );
+  });
+
+  test('downloadModel', () async {
+    EdgeGenai edgeGenaiPlugin = EdgeGenai();
+    MockEdgeGenaiPlatform fakePlatform = MockEdgeGenaiPlatform();
+    EdgeGenaiPlatform.instance = fakePlatform;
+
+    await expectLater(
+      edgeGenaiPlugin.downloadModel(),
+      emits(EdgeGenaiDownloadProgress(status: EdgeGenaiDownloadStatus.completed)),
     );
   });
 }
