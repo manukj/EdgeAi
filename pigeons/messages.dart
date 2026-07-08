@@ -33,6 +33,11 @@ enum EdgeGenaiAvailability {
 abstract class EdgeGenaiHostApi {
   @async
   EdgeGenaiAvailability checkAvailability();
+
+  /// Sends [prompt] to the on-device model and returns its generated text
+  /// response.
+  @async
+  String generateContent(String prompt);
 }
 
 /// The status of an on-device model download.

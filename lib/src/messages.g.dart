@@ -248,6 +248,27 @@ class EdgeGenaiHostApi {
     ;
     return pigeonVar_replyValue! as EdgeGenaiAvailability;
   }
+
+  /// Sends [prompt] to the on-device model and returns its generated text
+  /// response.
+  Future<String> generateContent(String prompt) async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.generateContent$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[prompt]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: false,
+    )
+    ;
+    return pigeonVar_replyValue! as String;
+  }
 }
 
 Stream<EdgeGenaiDownloadProgress> downloadProgress( {String instanceName = ''}) {

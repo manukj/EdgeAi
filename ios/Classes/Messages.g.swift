@@ -314,6 +314,9 @@ var messagesPigeonMethodCodec = FlutterStandardMethodCodec(readerWriter: Message
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol EdgeGenaiHostApi {
   func checkAvailability(completion: @escaping (Result<EdgeGenaiAvailability, Error>) -> Void)
+  /// Sends [prompt] to the on-device model and returns its generated text
+  /// response.
+  func generateContent(prompt: String, completion: @escaping (Result<String, Error>) -> Void)
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -336,6 +339,25 @@ class EdgeGenaiHostApiSetup {
       }
     } else {
       checkAvailabilityChannel.setMessageHandler(nil)
+    }
+    /// Sends [prompt] to the on-device model and returns its generated text
+    /// response.
+    let generateContentChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.generateContent\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      generateContentChannel.setMessageHandler { message, reply in
+        let args = message as! [Any?]
+        let promptArg = args[0] as! String
+        api.generateContent(prompt: promptArg) { result in
+          switch result {
+          case .success(let res):
+            reply(wrapResult(res))
+          case .failure(let error):
+            reply(wrapError(error))
+          }
+        }
+      }
+    } else {
+      generateContentChannel.setMessageHandler(nil)
     }
   }
 }

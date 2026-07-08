@@ -24,16 +24,25 @@ void main() {
 
   setUp(() {
     mockChannel('checkAvailability', EdgeGenaiAvailability.available);
+    mockChannel('generateContent', 'a generated response');
   });
 
   tearDown(() {
     mockChannel('checkAvailability', null);
+    mockChannel('generateContent', null);
   });
 
   test('checkAvailability', () async {
     expect(
       await platform.checkAvailability(),
       EdgeGenaiAvailability.available,
+    );
+  });
+
+  test('generateContent', () async {
+    expect(
+      await platform.generateContent('a prompt'),
+      'a generated response',
     );
   });
 

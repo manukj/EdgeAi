@@ -36,6 +36,29 @@ public class EdgeGenaiPlugin: NSObject, FlutterPlugin, EdgeGenaiHostApi {
     #endif
     completion(.success(.unavailable))
   }
+
+  func generateContent(
+    prompt: String, completion: @escaping (Result<String, Error>) -> Void
+  ) {
+    #if canImport(FoundationModels)
+      if #available(iOS 26.0, *) {
+        Task {
+          do {
+            let session = LanguageModelSession()
+            let response = try await session.respond(to: prompt)
+            completion(.success(response.content))
+          } catch {
+            completion(.failure(error))
+          }
+        }
+        return
+      }
+    #endif
+    completion(
+      .failure(
+        PigeonError(
+          code: "unavailable", message: "The on-device model isn't available.", details: nil)))
+  }
 }
 
 /// There's nothing for the app to download on iOS — Apple Intelligence is

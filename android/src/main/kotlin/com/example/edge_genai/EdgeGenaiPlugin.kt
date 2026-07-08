@@ -48,6 +48,20 @@ class EdgeGenaiPlugin :
         pluginBinding?.let { EdgeGenaiHostApi.setUp(it.binaryMessenger, null) }
         pluginBinding = null
     }
+
+    override fun generateContent(
+        prompt: String,
+        callback: (Result<String>) -> Unit
+    ) {
+        scope.launch {
+            try {
+                val response = generativeModel.generateContent(prompt)
+                callback(Result.success(response.candidates.first().text))
+            } catch (e: Exception) {
+                callback(Result.failure(e))
+            }
+        }
+    }
 }
 
 /** Triggers the Gemini Nano download when Flutter starts listening, and streams its progress. */

@@ -328,6 +328,11 @@ val MessagesPigeonMethodCodec = StandardMethodCodec(MessagesPigeonCodec())
 /** Generated interface from Pigeon that represents a handler of messages from Flutter. */
 interface EdgeGenaiHostApi {
   fun checkAvailability(callback: (Result<EdgeGenaiAvailability>) -> Unit)
+  /**
+   * Sends [prompt] to the on-device model and returns its generated text
+   * response.
+   */
+  fun generateContent(prompt: String, callback: (Result<String>) -> Unit)
 
   companion object {
     /** The codec used by EdgeGenaiHostApi. */
@@ -343,6 +348,26 @@ interface EdgeGenaiHostApi {
         if (api != null) {
           channel.setMessageHandler { _, reply ->
             api.checkAvailability{ result: Result<EdgeGenaiAvailability> ->
+              val error = result.exceptionOrNull()
+              if (error != null) {
+                reply.reply(MessagesPigeonUtils.wrapError(error))
+              } else {
+                val data = result.getOrNull()
+                reply.reply(MessagesPigeonUtils.wrapResult(data))
+              }
+            }
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.edge_genai.EdgeGenaiHostApi.generateContent$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val promptArg = args[0] as String
+            api.generateContent(promptArg) { result: Result<String> ->
               val error = result.exceptionOrNull()
               if (error != null) {
                 reply.reply(MessagesPigeonUtils.wrapError(error))

@@ -15,6 +15,10 @@ class MockEdgeGenaiPlatform
   Stream<EdgeGenaiDownloadProgress> downloadModel() => Stream.value(
     EdgeGenaiDownloadProgress(status: EdgeGenaiDownloadStatus.completed),
   );
+
+  @override
+  Future<String> generateContent(String prompt) =>
+      Future.value('a generated response');
 }
 
 void main() {
@@ -43,6 +47,17 @@ void main() {
     await expectLater(
       edgeGenaiPlugin.downloadModel(),
       emits(EdgeGenaiDownloadProgress(status: EdgeGenaiDownloadStatus.completed)),
+    );
+  });
+
+  test('generateContent', () async {
+    EdgeGenai edgeGenaiPlugin = EdgeGenai();
+    MockEdgeGenaiPlatform fakePlatform = MockEdgeGenaiPlatform();
+    EdgeGenaiPlatform.instance = fakePlatform;
+
+    expect(
+      await edgeGenaiPlugin.generateContent('a prompt'),
+      'a generated response',
     );
   });
 }

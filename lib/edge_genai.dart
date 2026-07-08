@@ -24,4 +24,10 @@ class EdgeGenai {
   Stream<EdgeGenaiDownloadProgress> downloadModel() {
     return EdgeGenaiPlatform.instance.downloadModel();
   }
+
+  /// Sends [prompt] to the on-device model and returns its generated text
+  /// response.
+  Future<String> generateContent(String prompt) {
+    return EdgeGenaiPlatform.instance.generateContent(prompt);
+  }
 }

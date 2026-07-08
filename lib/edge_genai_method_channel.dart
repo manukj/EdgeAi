@@ -16,4 +16,9 @@ class MethodChannelEdgeGenai extends EdgeGenaiPlatform {
   Stream<EdgeGenaiDownloadProgress> downloadModel() {
     return downloadProgress();
   }
+
+  @override
+  Future<String> generateContent(String prompt) {
+    return hostApi.generateContent(prompt);
+  }
 }

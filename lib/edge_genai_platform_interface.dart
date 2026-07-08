@@ -35,4 +35,10 @@ abstract class EdgeGenaiPlatform extends PlatformInterface {
   Stream<EdgeGenaiDownloadProgress> downloadModel() {
     throw UnimplementedError('downloadModel() has not been implemented.');
   }
+
+  /// Sends [prompt] to the on-device model and returns its generated text
+  /// response.
+  Future<String> generateContent(String prompt) {
+    throw UnimplementedError('generateContent() has not been implemented.');
+  }
 }
