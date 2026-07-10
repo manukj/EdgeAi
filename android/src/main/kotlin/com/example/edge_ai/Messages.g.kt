@@ -390,13 +390,23 @@ val MessagesPigeonMethodCodec = StandardMethodCodec(MessagesPigeonCodec())
 interface EdgeAiHostApi {
   fun checkAvailability(callback: (Result<EdgeAiAvailability>) -> Unit)
   /**
-   * Stores [prompt] and [options] for the next `generateContentChunk` event
-   * channel subscription to use.
+   * Stores [prompt], [options], and [useMemory] for the next
+   * `generateContentChunk` event channel subscription to use.
+   *
+   * When [useMemory] is true, this call remembers (and builds on) prior
+   * turns from previous [useMemory] calls; when false, it's a stateless,
+   * one-off call that neither reads nor updates the remembered
+   * conversation.
    *
    * Event channels can't carry parameters, so callers must invoke this
    * immediately before listening to the `generateContentChunk` stream.
    */
-  fun startGenerateContent(prompt: String, options: EdgeAiGenerationOptions?)
+  fun startGenerateContent(prompt: String, options: EdgeAiGenerationOptions?, useMemory: Boolean)
+  /**
+   * Clears any remembered conversation history so the next
+   * `generateContent` call starts a fresh conversation.
+   */
+  fun resetConversation()
 
   companion object {
     /** The codec used by EdgeAiHostApi. */
@@ -432,8 +442,25 @@ interface EdgeAiHostApi {
             val args = message as List<Any?>
             val promptArg = args[0] as String
             val optionsArg = args[1] as EdgeAiGenerationOptions?
+            val useMemoryArg = args[2] as Boolean
             val wrapped: List<Any?> = try {
-              api.startGenerateContent(promptArg, optionsArg)
+              api.startGenerateContent(promptArg, optionsArg, useMemoryArg)
+              listOf(null)
+            } catch (exception: Throwable) {
+              MessagesPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.edge_ai.EdgeAiHostApi.resetConversation$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              api.resetConversation()
               listOf(null)
             } catch (exception: Throwable) {
               MessagesPigeonUtils.wrapError(exception)

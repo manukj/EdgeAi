@@ -54,6 +54,10 @@ abstract class EdgeAiHostApi {
   /// Event channels can't carry parameters, so callers must invoke this
   /// immediately before listening to the `generateContentChunk` stream.
   void startGenerateContent(String prompt, EdgeAiGenerationOptions? options);
+
+  /// Clears any remembered conversation history so the next
+  /// `generateContent` call starts a fresh conversation.
+  void resetConversation();
 }
 
 /// The status of an on-device model download.

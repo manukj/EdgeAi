@@ -21,8 +21,14 @@ class MethodChannelEdgeAi extends EdgeAiPlatform {
   Stream<String> generateContent(
     String prompt, {
     EdgeAiGenerationOptions? options,
+    bool useMemory = false,
   }) async* {
-    await hostApi.startGenerateContent(prompt, options);
+    await hostApi.startGenerateContent(prompt, options, useMemory);
     yield* generateContentChunk();
+  }
+
+  @override
+  Future<void> resetConversation() {
+    return hostApi.resetConversation();
   }
 }

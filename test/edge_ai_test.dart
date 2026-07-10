@@ -17,8 +17,14 @@ class MockEdgeAiPlatform
   );
 
   @override
-  Stream<String> generateContent(String prompt, {EdgeAiGenerationOptions? options}) =>
-      Stream.value('a generated response');
+  Stream<String> generateContent(
+    String prompt, {
+    EdgeAiGenerationOptions? options,
+    bool useMemory = false,
+  }) => Stream.value('a generated response');
+
+  @override
+  Future<void> resetConversation() => Future.value();
 }
 
 void main() {

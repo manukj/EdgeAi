@@ -366,12 +366,20 @@ var messagesPigeonMethodCodec = FlutterStandardMethodCodec(readerWriter: Message
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.
 protocol EdgeAiHostApi {
   func checkAvailability(completion: @escaping (Result<EdgeAiAvailability, Error>) -> Void)
-  /// Stores [prompt] and [options] for the next `generateContentChunk` event
-  /// channel subscription to use.
+  /// Stores [prompt], [options], and [useMemory] for the next
+  /// `generateContentChunk` event channel subscription to use.
+  ///
+  /// When [useMemory] is true, this call remembers (and builds on) prior
+  /// turns from previous [useMemory] calls; when false, it's a stateless,
+  /// one-off call that neither reads nor updates the remembered
+  /// conversation.
   ///
   /// Event channels can't carry parameters, so callers must invoke this
   /// immediately before listening to the `generateContentChunk` stream.
-  func startGenerateContent(prompt: String, options: EdgeAiGenerationOptions?) throws
+  func startGenerateContent(prompt: String, options: EdgeAiGenerationOptions?, useMemory: Bool) throws
+  /// Clears any remembered conversation history so the next
+  /// `generateContent` call starts a fresh conversation.
+  func resetConversation() throws
 }
 
 /// Generated setup class from Pigeon to handle messages through the `binaryMessenger`.
@@ -395,8 +403,13 @@ class EdgeAiHostApiSetup {
     } else {
       checkAvailabilityChannel.setMessageHandler(nil)
     }
-    /// Stores [prompt] and [options] for the next `generateContentChunk` event
-    /// channel subscription to use.
+    /// Stores [prompt], [options], and [useMemory] for the next
+    /// `generateContentChunk` event channel subscription to use.
+    ///
+    /// When [useMemory] is true, this call remembers (and builds on) prior
+    /// turns from previous [useMemory] calls; when false, it's a stateless,
+    /// one-off call that neither reads nor updates the remembered
+    /// conversation.
     ///
     /// Event channels can't carry parameters, so callers must invoke this
     /// immediately before listening to the `generateContentChunk` stream.
@@ -406,8 +419,9 @@ class EdgeAiHostApiSetup {
         let args = message as! [Any?]
         let promptArg = args[0] as! String
         let optionsArg: EdgeAiGenerationOptions? = nilOrValue(args[1])
+        let useMemoryArg = args[2] as! Bool
         do {
-          try api.startGenerateContent(prompt: promptArg, options: optionsArg)
+          try api.startGenerateContent(prompt: promptArg, options: optionsArg, useMemory: useMemoryArg)
           reply(wrapResult(nil))
         } catch {
           reply(wrapError(error))
@@ -415,6 +429,21 @@ class EdgeAiHostApiSetup {
       }
     } else {
       startGenerateContentChannel.setMessageHandler(nil)
+    }
+    /// Clears any remembered conversation history so the next
+    /// `generateContent` call starts a fresh conversation.
+    let resetConversationChannel = FlutterBasicMessageChannel(name: "dev.flutter.pigeon.edge_ai.EdgeAiHostApi.resetConversation\(channelSuffix)", binaryMessenger: binaryMessenger, codec: codec)
+    if let api = api {
+      resetConversationChannel.setMessageHandler { _, reply in
+        do {
+          try api.resetConversation()
+          reply(wrapResult(nil))
+        } catch {
+          reply(wrapError(error))
+        }
+      }
+    } else {
+      resetConversationChannel.setMessageHandler(nil)
     }
   }
 }

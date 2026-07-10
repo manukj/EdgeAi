@@ -31,13 +31,27 @@ class EdgeAi {
   ///
   /// Each event is the full response text generated so far, not just the
   /// newly-added chunk, so UI code can simply display the latest event.
+  ///
+  /// By default, this is a stateless one-off call. Pass [useMemory] as
+  /// true to remember (and build on) prior [useMemory] calls; use
+  /// [resetConversation] to start that remembered conversation over.
   Stream<String> generateContent(
     String prompt, {
     EdgeAiGenerationOptions? options,
+    bool useMemory = false,
   }) {
     return EdgeAiPlatform.instance.generateContent(
       prompt,
       options: options,
+      useMemory: useMemory,
     );
+  }
+
+  /// Clears any remembered conversation history so the next
+  /// [generateContent] call starts a fresh conversation.
+  ///
+  /// On platforms without conversation memory, this is a no-op.
+  Future<void> resetConversation() {
+    return EdgeAiPlatform.instance.resetConversation();
   }
 }

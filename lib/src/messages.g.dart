@@ -310,19 +310,44 @@ class EdgeAiHostApi {
     return pigeonVar_replyValue! as EdgeAiAvailability;
   }
 
-  /// Stores [prompt] and [options] for the next `generateContentChunk` event
-  /// channel subscription to use.
+  /// Stores [prompt], [options], and [useMemory] for the next
+  /// `generateContentChunk` event channel subscription to use.
+  ///
+  /// When [useMemory] is true, this call remembers (and builds on) prior
+  /// turns from previous [useMemory] calls; when false, it's a stateless,
+  /// one-off call that neither reads nor updates the remembered
+  /// conversation.
   ///
   /// Event channels can't carry parameters, so callers must invoke this
   /// immediately before listening to the `generateContentChunk` stream.
-  Future<void> startGenerateContent(String prompt, EdgeAiGenerationOptions? options) async {
+  Future<void> startGenerateContent(String prompt, EdgeAiGenerationOptions? options, bool useMemory) async {
     final pigeonVar_channelName = 'dev.flutter.pigeon.edge_ai.EdgeAiHostApi.startGenerateContent$pigeonVar_messageChannelSuffix';
     final pigeonVar_channel = BasicMessageChannel<Object?>(
       pigeonVar_channelName,
       pigeonChannelCodec,
       binaryMessenger: pigeonVar_binaryMessenger,
     );
-    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[prompt, options]);
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(<Object?>[prompt, options, useMemory]);
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    _extractReplyValueOrThrow(
+        pigeonVar_replyList,
+        pigeonVar_channelName,
+        isNullValid: true,
+    )
+    ;
+  }
+
+  /// Clears any remembered conversation history so the next
+  /// `generateContent` call starts a fresh conversation.
+  Future<void> resetConversation() async {
+    final pigeonVar_channelName = 'dev.flutter.pigeon.edge_ai.EdgeAiHostApi.resetConversation$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(null);
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
     _extractReplyValueOrThrow(

@@ -20,6 +20,12 @@ class EdgeAiPlugin :
     private val generativeModel by lazy { Generation.getClient() }
     private var pendingPrompt: String? = null
     private var pendingOptions: EdgeAiGenerationOptions? = null
+    private var pendingUseMemory = false
+
+    // Prompt-to-response pairs for prior turns. The ML Kit GenAI Prompt API
+    // has no native session, so this is manually prepended to each new
+    // prompt (see ConversationHistory) to fake conversation memory.
+    private val history = mutableListOf<Pair<String, String>>()
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         pluginBinding = flutterPluginBinding
@@ -30,8 +36,8 @@ class EdgeAiPlugin :
         )
         GenerateContentChunkStreamHandler.register(
             flutterPluginBinding.binaryMessenger,
-            EdgeAiGenerateContentStreamHandler(scope, generativeModel) {
-                pendingPrompt?.let { it to pendingOptions }
+            EdgeAiGenerateContentStreamHandler(scope, generativeModel, history) {
+                pendingPrompt?.let { Triple(it, pendingOptions, pendingUseMemory) }
             },
         )
     }
@@ -56,10 +62,16 @@ class EdgeAiPlugin :
 
     override fun startGenerateContent(
         prompt: String,
-        options: EdgeAiGenerationOptions?
+        options: EdgeAiGenerationOptions?,
+        useMemory: Boolean
     ) {
         pendingPrompt = prompt
         pendingOptions = options
+        pendingUseMemory = useMemory
+    }
+
+    override fun resetConversation() {
+        history.clear()
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -112,13 +124,14 @@ private class EdgeAiDownloadProgressStreamHandler(
 private class EdgeAiGenerateContentStreamHandler(
     private val scope: CoroutineScope,
     private val generativeModel: GenerativeModel,
-    private val takePendingRequest: () -> Pair<String, EdgeAiGenerationOptions?>?
+    private val history: MutableList<Pair<String, String>>,
+    private val takePendingRequest: () -> Triple<String, EdgeAiGenerationOptions?, Boolean>?
 ) : GenerateContentChunkStreamHandler() {
     override fun onListen(
         p0: Any?,
         sink: PigeonEventSink<String>
     ) {
-        val (prompt, options) =
+        val (prompt, options, useMemory) =
             takePendingRequest() ?: run {
                 sink.error(
                     "no_prompt",
@@ -127,8 +140,10 @@ private class EdgeAiGenerateContentStreamHandler(
                 )
                 return
             }
+        val promptWithHistory =
+            if (useMemory) ConversationHistory.buildPrompt(history, prompt) else prompt
         val request =
-            generateContentRequest(TextPart(prompt)) {
+            generateContentRequest(TextPart(promptWithHistory)) {
                 options?.temperature?.let { temperature = it.toFloat() }
                 options?.maxOutputTokens?.let { maxOutputTokens = it.toInt() }
             }
@@ -139,6 +154,7 @@ private class EdgeAiGenerateContentStreamHandler(
                     cumulativeText += response.candidates.first().text
                     sink.success(cumulativeText)
                 }
+                if (useMemory) history.add(prompt to cumulativeText)
                 sink.endOfStream()
             } catch (e: Exception) {
                 sink.error("generate_content_failed", e.message, null)
