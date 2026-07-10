@@ -29,6 +29,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # Used by the example app's image description demo to pick a photo.
+  image_picker: ^1.1.2
+
 dev_dependencies:
   integration_test:
     sdk: flutter

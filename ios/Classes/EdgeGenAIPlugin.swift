@@ -14,6 +14,24 @@ struct PendingGenerateContentRequest {
   let image: Data?
 }
 
+extension PigeonError {
+  /// Wraps `error` as a `PigeonError`, preserving its own `code`/`message`
+  /// if it's already one (for example the "requires iOS 27" guards below),
+  /// instead of losing that message behind Swift's generic
+  /// `localizedDescription` bridging for non-`NSError` types.
+  static func wrapping(_ error: Error, fallbackCode: String) -> PigeonError {
+    if let pigeonError = error as? PigeonError {
+      return pigeonError
+    }
+    if let localizedError = error as? LocalizedError,
+      let description = localizedError.errorDescription
+    {
+      return PigeonError(code: fallbackCode, message: description, details: nil)
+    }
+    return PigeonError(code: fallbackCode, message: String(describing: error), details: nil)
+  }
+}
+
 public class EdgeGenAIPlugin: NSObject, FlutterPlugin, EdgeGenAIHostApi {
   private var pendingRequest: PendingGenerateContentRequest?
 
@@ -166,10 +184,7 @@ public class EdgeGenAIPlugin: NSObject, FlutterPlugin, EdgeGenAIHostApi {
             completion(.success(description))
           } catch {
             completion(
-              .failure(
-                PigeonError(
-                  code: "describe_image_failed", message: error.localizedDescription,
-                  details: nil)))
+              .failure(PigeonError.wrapping(error, fallbackCode: "describe_image_failed")))
           }
         }
         return
@@ -198,10 +213,7 @@ public class EdgeGenAIPlugin: NSObject, FlutterPlugin, EdgeGenAIHostApi {
             completion(.success(response))
           } catch {
             completion(
-              .failure(
-                PigeonError(
-                  code: "generate_content_failed", message: error.localizedDescription,
-                  details: nil)))
+              .failure(PigeonError.wrapping(error, fallbackCode: "generate_content_failed")))
           }
         }
         return

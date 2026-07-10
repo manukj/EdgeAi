@@ -45,8 +45,8 @@ class GenerateContentStreamHandler: GenerateContentChunkStreamHandler {
             }
             sink.endOfStream()
           } catch {
-            sink.error(
-              code: "generate_content_failed", message: error.localizedDescription, details: nil)
+            let wrapped = PigeonError.wrapping(error, fallbackCode: "generate_content_failed")
+            sink.error(code: wrapped.code, message: wrapped.message, details: wrapped.details)
           }
         }
         return
