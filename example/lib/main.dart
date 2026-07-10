@@ -28,7 +28,7 @@ class _MyAppState extends State<MyApp> {
   EdgeAiDownloadProgress? _downloadProgress;
   final List<_ChatMessage> _messages = [];
   bool _isGenerating = false;
-  final _edgeGenaiPlugin = EdgeAi();
+  final _edgeGenaiPlugin = EdgeAi(useMemory: true);
   final _promptController = TextEditingController(
     text: 'Write a 3 sentence story about a magical dog.',
   );
@@ -87,7 +87,7 @@ class _MyAppState extends State<MyApp> {
     });
     _promptController.clear();
 
-    _edgeGenaiPlugin.generateContent(prompt, useMemory: false).listen(
+    _edgeGenaiPlugin.generateContent(prompt).listen(
       (chunk) {
         if (!mounted) return;
         setState(() => modelMessage.text = chunk);

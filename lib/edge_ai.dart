@@ -10,6 +10,16 @@ export 'edge_ai_download_progress.dart'
 export 'edge_ai_generation_options.dart' show EdgeAiGenerationOptions;
 
 class EdgeAi {
+  /// Creates an [EdgeAi] instance.
+  ///
+  /// Pass [useMemory] as true to have [generateContent] remember (and
+  /// build on) prior turns; use [resetConversation] to start over. By
+  /// default, calls are stateless.
+  EdgeAi({this.useMemory = false});
+
+  /// Whether [generateContent] remembers prior turns. See [resetConversation].
+  final bool useMemory;
+
   /// Checks whether the on-device generative AI model is available.
   ///
   /// This does not download or enable the model — it only reports the
@@ -31,14 +41,9 @@ class EdgeAi {
   ///
   /// Each event is the full response text generated so far, not just the
   /// newly-added chunk, so UI code can simply display the latest event.
-  ///
-  /// By default, this is a stateless one-off call. Pass [useMemory] as
-  /// true to remember (and build on) prior [useMemory] calls; use
-  /// [resetConversation] to start that remembered conversation over.
   Stream<String> generateContent(
     String prompt, {
     EdgeAiGenerationOptions? options,
-    bool useMemory = false,
   }) {
     return EdgeAiPlatform.instance.generateContent(
       prompt,
