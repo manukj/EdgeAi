@@ -84,7 +84,14 @@ android {
 dependencies {
     compileOnly("io.flutter:flutter_embedding_release:1.0.0-$flutterEngineVersion")
     implementation("com.google.mlkit:genai-prompt:1.0.0-beta2")
+    implementation("com.google.mlkit:genai-summarization:1.0.0-beta1")
+    implementation("com.google.mlkit:genai-proofreading:1.0.0-beta1")
+    implementation("com.google.mlkit:genai-rewriting:1.0.0-beta1")
+    implementation("com.google.mlkit:genai-image-description:1.0.0-beta1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    // For awaiting the ListenableFutures returned by the task-specific
+    // ML Kit GenAI clients (checkFeatureStatus/runInference).
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.8.1")
 
     testImplementation("io.flutter:flutter_embedding_release:1.0.0-$flutterEngineVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
