@@ -1,62 +1,11 @@
-
-import 'edge_ai_availability.dart';
-import 'edge_ai_download_progress.dart';
-import 'edge_ai_generation_options.dart';
-import 'edge_ai_platform_interface.dart';
-
-export 'edge_ai_availability.dart' show EdgeAiAvailability;
-export 'edge_ai_download_progress.dart'
-    show EdgeAiDownloadProgress, EdgeAiDownloadStatus;
-export 'edge_ai_generation_options.dart' show EdgeAiGenerationOptions;
-
-class EdgeAi {
-  /// Creates an [EdgeAi] instance.
-  ///
-  /// Pass [useMemory] as true to have [generateContent] remember (and
-  /// build on) prior turns; use [resetConversation] to start over. By
-  /// default, calls are stateless.
-  EdgeAi({this.useMemory = false});
-
-  /// Whether [generateContent] remembers prior turns. See [resetConversation].
-  final bool useMemory;
-
-  /// Checks whether the on-device generative AI model is available.
-  ///
-  /// This does not download or enable the model — it only reports the
-  /// current state so the app can decide what UI to show.
-  Future<EdgeAiAvailability> checkAvailability() {
-    return EdgeAiPlatform.instance.checkAvailability();
-  }
-
-  /// Triggers the on-device model download (if one is needed) and streams
-  /// progress updates until it completes or fails.
-  ///
-  /// On iOS, Apple Intelligence must be enabled by the person in Settings —
-  /// there's nothing for the app to trigger, so this immediately completes.
-  Stream<EdgeAiDownloadProgress> downloadModel() {
-    return EdgeAiPlatform.instance.downloadModel();
-  }
-
-  /// Sends [prompt] to the on-device model and streams its generated text.
-  ///
-  /// Each event is the full response text generated so far, not just the
-  /// newly-added chunk, so UI code can simply display the latest event.
-  Stream<String> generateContent(
-    String prompt, {
-    EdgeAiGenerationOptions? options,
-  }) {
-    return EdgeAiPlatform.instance.generateContent(
-      prompt,
-      options: options,
-      useMemory: useMemory,
-    );
-  }
-
-  /// Clears any remembered conversation history so the next
-  /// [generateContent] call starts a fresh conversation.
-  ///
-  /// On platforms without conversation memory, this is a no-op.
-  Future<void> resetConversation() {
-    return EdgeAiPlatform.instance.resetConversation();
-  }
-}
+export 'edge_gen_ai_availability.dart'
+    show EdgeGenAIAvailability, EdgeGenAIFeature;
+export 'edge_gen_ai_download_progress.dart'
+    show EdgeGenAIDownloadProgress, EdgeGenAIDownloadStatus;
+export 'edge_gen_ai_generation_options.dart' show EdgeGenAIGenerationOptions;
+export 'edge_gen_ai_image_describer.dart' show EdgeGenAIImageDescriber;
+export 'edge_gen_ai_prompt.dart' show EdgeGenAIPrompt;
+export 'edge_gen_ai_proofreader.dart' show EdgeGenAIProofreader;
+export 'edge_gen_ai_rewrite_style.dart' show EdgeGenAIRewriteStyle;
+export 'edge_gen_ai_rewriter.dart' show EdgeGenAIRewriter;
+export 'edge_gen_ai_summarizer.dart' show EdgeGenAISummarizer;

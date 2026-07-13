@@ -1,69 +1,141 @@
+import 'dart:typed_data';
+
 import 'package:edge_ai/edge_ai.dart';
-import 'package:edge_ai/edge_ai_method_channel.dart';
-import 'package:edge_ai/edge_ai_platform_interface.dart';
+import 'package:edge_ai/edge_gen_ai_method_channel.dart';
+import 'package:edge_ai/edge_gen_ai_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-class MockEdgeAiPlatform
+class MockEdgeGenAIPlatform
     with MockPlatformInterfaceMixin
-    implements EdgeAiPlatform {
-  @override
-  Future<EdgeAiAvailability> checkAvailability() =>
-      Future.value(EdgeAiAvailability.available);
+    implements EdgeGenAIPlatform {
+  final List<String> generateContentSessionIds = [];
+  final List<String> resetConversationSessionIds = [];
 
   @override
-  Stream<EdgeAiDownloadProgress> downloadModel() => Stream.value(
-    EdgeAiDownloadProgress(status: EdgeAiDownloadStatus.completed),
-  );
+  Future<EdgeGenAIAvailability> checkAvailability(EdgeGenAIFeature feature) =>
+      Future.value(EdgeGenAIAvailability.available);
+
+  @override
+  Stream<EdgeGenAIDownloadProgress> downloadModel(EdgeGenAIFeature feature) =>
+      Stream.value(
+        EdgeGenAIDownloadProgress(status: EdgeGenAIDownloadStatus.completed),
+      );
 
   @override
   Stream<String> generateContent(
+    String sessionId,
     String prompt, {
-    EdgeAiGenerationOptions? options,
+    EdgeGenAIGenerationOptions? options,
     bool useMemory = false,
-  }) => Stream.value('a generated response');
+    Uint8List? image,
+  }) {
+    generateContentSessionIds.add(sessionId);
+    return Stream.value('a generated response');
+  }
 
   @override
-  Future<void> resetConversation() => Future.value();
+  Future<void> resetConversation(String sessionId) {
+    resetConversationSessionIds.add(sessionId);
+    return Future.value();
+  }
+
+  @override
+  Future<String> summarize(String text) => Future.value('a summary');
+
+  @override
+  Future<String> proofread(String text) => Future.value('a corrected text');
+
+  @override
+  Future<String> rewrite(String text, {required EdgeGenAIRewriteStyle style}) =>
+      Future.value('a rewritten text');
+
+  @override
+  Future<String> describeImage(Uint8List imageBytes) =>
+      Future.value('an image description');
 }
 
 void main() {
-  final EdgeAiPlatform initialPlatform = EdgeAiPlatform.instance;
+  final EdgeGenAIPlatform initialPlatform = EdgeGenAIPlatform.instance;
 
-  test('$MethodChannelEdgeAi is the default instance', () {
-    expect(initialPlatform, isInstanceOf<MethodChannelEdgeAi>());
+  test('$MethodChannelEdgeGenAI is the default instance', () {
+    expect(initialPlatform, isInstanceOf<MethodChannelEdgeGenAI>());
+  });
+
+  late MockEdgeGenAIPlatform fakePlatform;
+
+  setUp(() {
+    fakePlatform = MockEdgeGenAIPlatform();
+    EdgeGenAIPlatform.instance = fakePlatform;
   });
 
   test('checkAvailability', () async {
-    EdgeAi edgeGenaiPlugin = EdgeAi();
-    MockEdgeAiPlatform fakePlatform = MockEdgeAiPlatform();
-    EdgeAiPlatform.instance = fakePlatform;
-
     expect(
-      await edgeGenaiPlugin.checkAvailability(),
-      EdgeAiAvailability.available,
+      await EdgeGenAIPrompt().checkAvailability(),
+      EdgeGenAIAvailability.available,
     );
   });
 
   test('downloadModel', () async {
-    EdgeAi edgeGenaiPlugin = EdgeAi();
-    MockEdgeAiPlatform fakePlatform = MockEdgeAiPlatform();
-    EdgeAiPlatform.instance = fakePlatform;
-
     await expectLater(
-      edgeGenaiPlugin.downloadModel(),
-      emits(EdgeAiDownloadProgress(status: EdgeAiDownloadStatus.completed)),
+      EdgeGenAIPrompt().downloadModel(),
+      emits(
+        EdgeGenAIDownloadProgress(status: EdgeGenAIDownloadStatus.completed),
+      ),
     );
   });
 
   test('generateContent', () async {
-    EdgeAi edgeGenaiPlugin = EdgeAi();
-    MockEdgeAiPlatform fakePlatform = MockEdgeAiPlatform();
-    EdgeAiPlatform.instance = fakePlatform;
-
     await expectLater(
-      edgeGenaiPlugin.generateContent('a prompt'),
+      EdgeGenAIPrompt().generateContent('a prompt'),
       emits('a generated response'),
+    );
+  });
+
+  test('each EdgeGenAIPrompt instance has its own session', () async {
+    final first = EdgeGenAIPrompt(useMemory: true);
+    final second = EdgeGenAIPrompt(useMemory: true);
+
+    await first.generateContent('a prompt').drain<void>();
+    await second.generateContent('a prompt').drain<void>();
+    await first.resetConversation();
+
+    expect(fakePlatform.generateContentSessionIds, hasLength(2));
+    expect(
+      fakePlatform.generateContentSessionIds.toSet(),
+      hasLength(2),
+      reason: 'instances must not share a session id',
+    );
+    expect(fakePlatform.resetConversationSessionIds, [
+      fakePlatform.generateContentSessionIds.first,
+    ]);
+  });
+
+  test('summarize', () async {
+    expect(await EdgeGenAISummarizer().summarize('a text'), 'a summary');
+  });
+
+  test('proofread', () async {
+    expect(
+      await EdgeGenAIProofreader().proofread('a text'),
+      'a corrected text',
+    );
+  });
+
+  test('rewrite', () async {
+    expect(
+      await EdgeGenAIRewriter().rewrite(
+        'a text',
+        style: EdgeGenAIRewriteStyle.professional,
+      ),
+      'a rewritten text',
+    );
+  });
+
+  test('describeImage', () async {
+    expect(
+      await EdgeGenAIImageDescriber().describeImage(Uint8List.fromList([1])),
+      'an image description',
     );
   });
 }

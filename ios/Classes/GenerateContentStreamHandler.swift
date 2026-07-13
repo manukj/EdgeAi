@@ -3,15 +3,15 @@ import Flutter
   import FoundationModels
 #endif
 
-/// Starts generation for the prompt/options stashed via `startGenerateContent` when Flutter
+/// Starts generation for the request stashed via `startGenerateContent` when Flutter
 /// starts listening, and streams the cumulative response text as it's generated.
 class GenerateContentStreamHandler: GenerateContentChunkStreamHandler {
-  private let takePendingRequest: () -> (String, EdgeAiGenerationOptions?, Bool)?
-  private let takeSession: (Bool) -> Any?
+  private let takePendingRequest: () -> PendingGenerateContentRequest?
+  private let takeSession: (String, Bool) -> Any?
 
   init(
-    takePendingRequest: @escaping () -> (String, EdgeAiGenerationOptions?, Bool)?,
-    takeSession: @escaping (Bool) -> Any?
+    takePendingRequest: @escaping () -> PendingGenerateContentRequest?,
+    takeSession: @escaping (String, Bool) -> Any?
   ) {
     self.takePendingRequest = takePendingRequest
     self.takeSession = takeSession
@@ -19,7 +19,7 @@ class GenerateContentStreamHandler: GenerateContentChunkStreamHandler {
   }
 
   override func onListen(withArguments arguments: Any?, sink: PigeonEventSink<String>) {
-    guard let (prompt, options, useMemory) = takePendingRequest() else {
+    guard let request = takePendingRequest() else {
       sink.error(
         code: "no_prompt", message: "startGenerateContent must be called before listening.",
         details: nil)
@@ -27,7 +27,10 @@ class GenerateContentStreamHandler: GenerateContentChunkStreamHandler {
     }
     #if canImport(FoundationModels)
       if #available(iOS 26.0, *) {
-        guard let session = takeSession(useMemory) as? LanguageModelSession else {
+        guard
+          let session = takeSession(request.sessionId, request.useMemory)
+            as? LanguageModelSession
+        else {
           sink.error(
             code: "unavailable", message: "The on-device model isn't available.", details: nil)
           return
@@ -35,14 +38,15 @@ class GenerateContentStreamHandler: GenerateContentChunkStreamHandler {
         Task {
           do {
             try await FoundationModelsBridge.streamResponse(
-              session: session, prompt: prompt, options: options
+              session: session, prompt: request.prompt, image: request.image,
+              options: request.options
             ) { chunk in
               sink.success(chunk)
             }
             sink.endOfStream()
           } catch {
-            sink.error(
-              code: "generate_content_failed", message: error.localizedDescription, details: nil)
+            let wrapped = PigeonError.wrapping(error, fallbackCode: "generate_content_failed")
+            sink.error(code: wrapped.code, message: wrapped.message, details: wrapped.details)
           }
         }
         return

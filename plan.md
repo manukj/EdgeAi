@@ -1,6 +1,7 @@
 # Plan: multi-feature architecture (Prompt, Summarization, Proofreading, Rewriting, Image Description)
 
-Status: **design only — not yet implemented.**
+Status: **implemented** (see "Next steps" — all four are done). Kept for
+the design rationale and the verified native API reference.
 
 ## Decision
 
