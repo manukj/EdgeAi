@@ -1,91 +1,52 @@
-# edge_ai
+# edge_gen_ai
 
 A Flutter plugin for **on-device** generative AI. It wraps Apple's Foundation
 Models (iOS) and Google's Gemini Nano via ML Kit GenAI (Android) behind one
-Dart API, so everything is generated fully on-device — no network calls, no
-cloud API keys, no data leaving the phone.
+Dart API — no network calls, no cloud API keys, no data leaving the phone.
+
+> [!IMPORTANT]
+> **Platform versions matter a lot here:**
+> - **iOS 26+** required, with Apple Intelligence enabled in Settings.
+>   **iOS 27+** required for image input (Foundation Models `Attachment`, Beta).
+> - **Android** API 26+ on a device with Gemini Nano/AICore support
+>   (e.g. Pixel 8+, Samsung S23+). **Android's backend is Beta** —
+>   ML Kit GenAI APIs have no SLA or backward-compatibility guarantee.
+>   See [ML Kit GenAI](https://developers.google.com/ml-kit/genai).
+>
+> Use `checkAvailability()` to detect unsupported OS versions, disabled
+> Apple Intelligence, or missing AICore support at runtime.
 
 ## Features
 
-Each feature is its own small class, because on Android each one is a
-distinct ML Kit GenAI client with its own independent availability and
-download lifecycle. Every class exposes `checkAvailability()` and
-`downloadModel()` alongside its task method:
-
 | Class | Task | Details |
 | --- | --- | --- |
-| `EdgeGenAIPrompt` | `generateContent()` | Streams the model's response to a free-form prompt as it's generated, with optional `temperature` / `maxOutputTokens` controls, an optional image input, and optional per-instance conversation memory. |
+| `EdgeGenAIPrompt` | `generateContent()` | Free-form prompt, streamed response, optional image input and conversation memory. |
 | `EdgeGenAISummarizer` | `summarize()` | Summarizes text as bullet points. |
-| `EdgeGenAIProofreader` | `proofread()` | Fixes grammar, spelling, and punctuation without changing the text's meaning. |
-| `EdgeGenAIRewriter` | `rewrite()` | Rewrites text in a chosen `EdgeGenAIRewriteStyle` (rephrase, elaborate, emojify, shorten, friendly, professional). |
+| `EdgeGenAIProofreader` | `proofread()` | Fixes grammar, spelling, and punctuation. |
+| `EdgeGenAIRewriter` | `rewrite()` | Rewrites text in a chosen `EdgeGenAIRewriteStyle`. |
 | `EdgeGenAIImageDescriber` | `describeImage()` | Describes an image. |
 
-On Android the four task-specific features map to ML Kit GenAI's dedicated,
-fine-tuned APIs (Summarization, Proofreading, Rewriting, Image Description);
-on iOS they're implemented as task-specific prompts to the same system
-Foundation Model that backs `EdgeGenAIPrompt`.
+Every class exposes `checkAvailability()` and `downloadModel()` alongside its
+task method. On Android these map to ML Kit GenAI's dedicated APIs; on iOS
+they're task-specific prompts to the same Foundation Model that backs
+`EdgeGenAIPrompt`.
 
-### Availability + download
-
-`checkAvailability()` reports whether the on-device feature is ready,
-downloadable, not yet enabled, or unsupported. `downloadModel()` streams
-download progress on Android (Gemini Nano via AICore); on iOS there's
-nothing to download — Apple Intelligence is a system-wide Setting — so it
-completes immediately.
-
-### Conversation memory
-
-`EdgeGenAIPrompt(useMemory: true)` remembers prior turns across
-`generateContent()` calls; `resetConversation()` starts over. Calls are
-stateless by default, and every `EdgeGenAIPrompt` instance keeps its own
-isolated conversation. iOS reuses a native `LanguageModelSession` per
-instance; Android manually prepends prior turns to each prompt (bounded by
-the model's ~4000-token input limit), since ML Kit's Prompt API has no
-native session.
-
-### Image input
-
-`generateContent(image: ...)` and `describeImage()` accept a single encoded
-image (e.g. PNG or JPEG bytes) — one image per call, which is the honest
-common denominator: Android's `GenerateContentRequest` accepts at most one
-image regardless of what iOS could support. On iOS, image input requires
-iOS 27+ (Foundation Models' `Attachment`, currently Beta) and building with
-Xcode 27+; on earlier OS/SDK versions the image features report unavailable.
-
-## Beta / stability notes
-
-- **Android's backend is Beta.** ML Kit's GenAI APIs are explicitly
-  documented as *"offered in beta, and not subject to any SLA or
-  deprecation policy — changes may be made that break backward
-  compatibility."*
-  See [ML Kit GenAI](https://developers.google.com/ml-kit/genai).
-- **iOS requires iOS 26+ with Apple Intelligence enabled.** Foundation
-  Models' core APIs used here (`LanguageModelSession`,
-  `GenerationOptions`) are stable; image input additionally uses
-  `Attachment`, which is iOS 27+ and still marked Beta by Apple.
-  See [Foundation Models](https://developer.apple.com/documentation/foundationmodels).
-- **No function/tool calling yet.** This was investigated for both
-  platforms: Apple's Foundation Models supports it natively via the
-  `Tool` protocol, but Google's ML Kit GenAI Prompt API (Gemini Nano) does
-  not — confirmed by direct testing, including with Google's
-  [Agent Development Kit](https://developer.android.com/ai/adk), which
-  correctly sends a tool schema to the model but the model never
-  actually invokes it. Not implemented in this plugin.
-
-## Platform requirements
-
-- **iOS**: iOS 26+ with Apple Intelligence enabled in Settings (iOS 27+
-  for image input). On older OS versions, unsupported devices, or with
-  Apple Intelligence disabled, `checkAvailability()` reports why.
-- **Android**: API 26+ on a device with Gemini Nano support via AICore
-  (e.g. Pixel 8+, Samsung S23+). Devices without AICore support, or with
-  an unlocked bootloader, report unavailable. Each feature's model
-  downloads separately.
+- **Availability + download**: `checkAvailability()` reports ready /
+  downloadable / not-enabled / unsupported. `downloadModel()` streams
+  download progress on Android; on iOS it completes immediately (nothing
+  to download).
+- **Conversation memory**: `EdgeGenAIPrompt(useMemory: true)` remembers
+  prior turns; `resetConversation()` starts over. Stateless by default.
+- **Image input**: one encoded image (PNG/JPEG bytes) per call — the
+  common denominator across both platforms.
+- **No function/tool calling yet**: supported natively by Apple's
+  Foundation Models, but not by Google's ML Kit GenAI Prompt API
+  (confirmed by testing) — so not implemented here.
 
 ## Usage
 
 ```dart
-import 'package:edge_ai/edge_ai.dart';
+import 'package:edge_gen_ai/edge_gen_ai.dart';
 
 final prompt = EdgeGenAIPrompt();
 

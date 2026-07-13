@@ -1,4 +1,4 @@
-package com.example.edge_ai
+package com.example.edge_gen_ai
 
 /**
  * Formats prior conversation turns and a new prompt into a single text

@@ -1,9 +1,9 @@
 #
 # To learn more about a Podspec see http://guides.cocoapods.org/syntax/podspec.html.
-# Run `pod lib lint edge_ai.podspec` to validate before publishing.
+# Run `pod lib lint edge_gen_ai.podspec` to validate before publishing.
 #
 Pod::Spec.new do |s|
-  s.name             = 'edge_ai'
+  s.name             = 'edge_gen_ai'
   s.version          = '0.0.1'
   s.summary          = 'A new Flutter plugin project.'
   s.description      = <<-DESC
@@ -25,5 +25,5 @@ A new Flutter plugin project.
   # required reason APIs, update the PrivacyInfo.xcprivacy file to describe your
   # plugin's privacy impact, and then uncomment this line. For more information,
   # see https://developer.apple.com/documentation/bundleresources/privacy_manifest_files
-  # s.resource_bundles = {'edge_ai_privacy' => ['Resources/PrivacyInfo.xcprivacy']}
+  # s.resource_bundles = {'edge_gen_ai_privacy' => ['Resources/PrivacyInfo.xcprivacy']}
 end

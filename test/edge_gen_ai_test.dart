@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
-import 'package:edge_ai/edge_ai.dart';
-import 'package:edge_ai/edge_gen_ai_method_channel.dart';
-import 'package:edge_ai/edge_gen_ai_platform_interface.dart';
+import 'package:edge_gen_ai/edge_gen_ai.dart';
+import 'package:edge_gen_ai/edge_gen_ai_method_channel.dart';
+import 'package:edge_gen_ai/edge_gen_ai_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:edge_ai/edge_ai.dart';
+import 'package:edge_gen_ai/edge_gen_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';

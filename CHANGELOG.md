@@ -2,6 +2,8 @@
 
 **Breaking changes**
 
+* Renamed the package from `edge_ai` to `edge_gen_ai`. Update your
+  dependency and imports (e.g. `package:edge_gen_ai/edge_gen_ai.dart`).
 * Renamed the public API from the `EdgeAi` prefix to `EdgeGenAI`:
   * `EdgeAi` is now `EdgeGenAIPrompt`.
   * `EdgeAiAvailability`, `EdgeAiDownloadProgress`, `EdgeAiDownloadStatus`,
