@@ -212,6 +212,7 @@ class _ChatPageState extends State<ChatPage>
     final prompt = _promptController.text;
     if (prompt.trim().isEmpty) return;
     final image = _pendingImage;
+    FocusManager.instance.primaryFocus?.unfocus();
 
     final modelMessage = _ChatMessage(isUser: false, text: '');
     setState(() {

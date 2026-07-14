@@ -5,8 +5,8 @@ homepage: https://github.com/manukj/EdgeAi
 repository: https://github.com/manukj/EdgeAi
 
 environment:
-  sdk: ^3.12.0
-  flutter: '>=3.44.0'
+  sdk: ^3.11.1
+  flutter: '>=3.3.0'
 
 dependencies:
   flutter:
