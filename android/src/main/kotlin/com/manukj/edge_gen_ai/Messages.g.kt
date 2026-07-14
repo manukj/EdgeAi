@@ -2,7 +2,7 @@
 // See also: https://pub.dev/packages/pigeon
 @file:Suppress("UNCHECKED_CAST", "ArrayInDataClass")
 
-package com.example.edge_gen_ai
+package com.manukj.edge_gen_ai
 
 import android.util.Log
 import io.flutter.plugin.common.BasicMessageChannel

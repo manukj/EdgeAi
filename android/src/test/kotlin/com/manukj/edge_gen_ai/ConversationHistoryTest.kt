@@ -1,4 +1,4 @@
-package com.example.edge_gen_ai
+package com.manukj.edge_gen_ai
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

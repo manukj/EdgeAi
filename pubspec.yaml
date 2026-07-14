@@ -1,7 +1,8 @@
 name: edge_gen_ai
-description: "A new Flutter plugin project."
+description: "A Flutter plugin for on-device generative AI, wrapping Apple Foundation Models (iOS) and Gemini Nano via ML Kit GenAI (Android) behind one Dart API."
 version: 0.1.0
-homepage:
+homepage: https://github.com/manukj/EdgeAi
+repository: https://github.com/manukj/EdgeAi
 
 environment:
   sdk: ^3.11.1
@@ -11,6 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   plugin_platform_interface: ^2.0.2
+  meta: ^1.16.0
 
 dev_dependencies:
   flutter_test:
@@ -23,7 +25,7 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.example.edge_gen_ai
+        package: com.manukj.edge_gen_ai
         pluginClass: EdgeGenAIPlugin
       ios:
         pluginClass: EdgeGenAIPlugin
