@@ -18,13 +18,13 @@ Dart API — no network calls, no cloud API keys, no data leaving the phone.
 
 ## Features
 
-| Class | Task | Details |
-| --- | --- | --- |
-| `EdgeGenAIPrompt` | `generateContent()` | Free-form prompt, streamed response, optional image input and conversation memory. |
-| `EdgeGenAISummarizer` | `summarize()` | Summarizes text as bullet points. |
-| `EdgeGenAIProofreader` | `proofread()` | Fixes grammar, spelling, and punctuation. |
-| `EdgeGenAIRewriter` | `rewrite()` | Rewrites text in a chosen `EdgeGenAIRewriteStyle`. |
-| `EdgeGenAIImageDescriber` | `describeImage()` | Describes an image. |
+| Class | Task | Details | Screenshot |
+| --- | --- | --- | --- |
+| `EdgeGenAIPrompt` | `generateContent()` | Free-form prompt, streamed response, optional image input and conversation memory. | ![generateContent](output/generateContent.png) |
+| `EdgeGenAISummarizer` | `summarize()` | Summarizes text as bullet points. | ![summarize](output/summarize.png) |
+| `EdgeGenAIProofreader` | `proofread()` | Fixes grammar, spelling, and punctuation. | ![proofread](output/proofread.png) |
+| `EdgeGenAIRewriter` | `rewrite()` | Rewrites text in a chosen `EdgeGenAIRewriteStyle`. | ![rewrite](output/rewrite.png) |
+| `EdgeGenAIImageDescriber` | `describeImage()` | Describes an image. | ![describeImage](output/describeImage.png) |
 
 Every class exposes `checkAvailability()` and `downloadModel()` alongside its
 task method. On Android these map to ML Kit GenAI's dedicated APIs; on iOS
