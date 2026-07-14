@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:edge_gen_ai/edge_gen_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:image_picker/image_picker.dart';
 
 void main() {
@@ -117,7 +118,7 @@ class _ResultCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            SelectableText(text),
+            MarkdownBody(data: text),
           ],
         ),
       ),
@@ -390,7 +391,7 @@ class _ChatPageState extends State<ChatPage>
                                     ),
                                   ),
                                 ),
-                              Text(message.text),
+                              MarkdownBody(data: message.text),
                             ],
                           ),
                         ),

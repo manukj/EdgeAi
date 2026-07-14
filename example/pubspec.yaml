@@ -31,6 +31,7 @@ dependencies:
 
   # Used by the example app's image description demo to pick a photo.
   image_picker: ^1.1.2
+  flutter_markdown_plus: ^1.0.12
 
 dev_dependencies:
   integration_test:

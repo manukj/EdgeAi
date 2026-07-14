@@ -1,3 +1,10 @@
+## 0.2.0
+
+* Updates the minimum supported SDK version to Flutter 3.44/Dart 3.12.
+* Adds Swift Package Manager support for iOS (in addition to CocoaPods).
+* Migrates the Android build to built-in Kotlin, dropping the explicit
+  `kotlin-android` Gradle plugin.
+
 ## 0.1.1
 
 * Fix README screenshots not rendering on pub.dev by using absolute GitHub
