@@ -1,3 +1,8 @@
+## 0.1.1
+
+* Fix README screenshots not rendering on pub.dev by using absolute GitHub
+  raw URLs instead of relative paths.
+
 ## 0.1.0
 
 **Breaking changes**

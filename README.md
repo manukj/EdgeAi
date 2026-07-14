@@ -1,8 +1,8 @@
 # edge_gen_ai
 
-A Flutter plugin for **on-device** generative AI. It wraps Apple's Foundation
-Models (iOS) and Google's Gemini Nano via ML Kit GenAI (Android) behind one
-Dart API — no network calls, no cloud API keys, no data leaving the phone.
+A Flutter plugin for **on-device** generative AI. It uses Apple's Foundation
+Models (iOS) and Google's Gemini Nano via ML Kit GenAI (Android) — no
+network calls, no cloud API keys, no data leaving the phone.
 
 It uses the model the OS already ships with, so there's no model file to
 manage; `downloadModel()` just triggers the OS's own on-demand delivery of
@@ -24,11 +24,11 @@ that shared system model when it isn't ready yet.
 
 | Class | Task | Details | Screenshot |
 | --- | --- | --- | --- |
-| `EdgeGenAIPrompt` | `generateContent()` | Free-form prompt, streamed response, optional image input and conversation memory. | ![generateContent](output/generateContent.png) |
-| `EdgeGenAISummarizer` | `summarize()` | Summarizes text as bullet points. | ![summarize](output/summarize.png) |
-| `EdgeGenAIProofreader` | `proofread()` | Fixes grammar, spelling, and punctuation. | ![proofread](output/proofread.png) |
-| `EdgeGenAIRewriter` | `rewrite()` | Rewrites text in a chosen `EdgeGenAIRewriteStyle`. | ![rewrite](output/rewrite.png) |
-| `EdgeGenAIImageDescriber` | `describeImage()` | Describes an image. | ![describeImage](output/describeImage.png) |
+| `EdgeGenAIPrompt` | `generateContent()` | Free-form prompt, streamed response, optional image input and conversation memory. | ![generateContent](https://raw.githubusercontent.com/manukj/EdgeAi/master/output/generateContent.png) |
+| `EdgeGenAISummarizer` | `summarize()` | Summarizes text as bullet points. | ![summarize](https://raw.githubusercontent.com/manukj/EdgeAi/master/output/summarize.png) |
+| `EdgeGenAIProofreader` | `proofread()` | Fixes grammar, spelling, and punctuation. | ![proofread](https://raw.githubusercontent.com/manukj/EdgeAi/master/output/proofread.png) |
+| `EdgeGenAIRewriter` | `rewrite()` | Rewrites text in a chosen `EdgeGenAIRewriteStyle`. | ![rewrite](https://raw.githubusercontent.com/manukj/EdgeAi/master/output/rewrite.png) |
+| `EdgeGenAIImageDescriber` | `describeImage()` | Describes an image. | ![describeImage](https://raw.githubusercontent.com/manukj/EdgeAi/master/output/describeImage.png) |
 
 Every class exposes `checkAvailability()` and `downloadModel()` alongside its
 task method. On Android these map to ML Kit GenAI's dedicated APIs; on iOS
