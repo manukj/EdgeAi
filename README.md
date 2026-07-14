@@ -4,6 +4,10 @@ A Flutter plugin for **on-device** generative AI. It wraps Apple's Foundation
 Models (iOS) and Google's Gemini Nano via ML Kit GenAI (Android) behind one
 Dart API — no network calls, no cloud API keys, no data leaving the phone.
 
+It uses the model the OS already ships with, so there's no model file to
+manage; `downloadModel()` just triggers the OS's own on-demand delivery of
+that shared system model when it isn't ready yet.
+
 > [!IMPORTANT]
 > **Platform versions matter a lot here:**
 > - **iOS 26+** required, with Apple Intelligence enabled in Settings.
@@ -37,11 +41,6 @@ they're task-specific prompts to the same Foundation Model that backs
   to download).
 - **Conversation memory**: `EdgeGenAIPrompt(useMemory: true)` remembers
   prior turns; `resetConversation()` starts over. Stateless by default.
-- **Image input**: one encoded image (PNG/JPEG bytes) per call — the
-  common denominator across both platforms.
-- **No function/tool calling yet**: supported natively by Apple's
-  Foundation Models, but not by Google's ML Kit GenAI Prompt API
-  (confirmed by testing) — so not implemented here.
 
 ## Usage
 
