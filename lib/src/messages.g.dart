@@ -34,6 +34,20 @@ Object? _extractReplyValueOrThrow(
   return replyList.firstOrNull;
 }
 
+List<Object?> wrapResponse({
+  Object? result,
+  PlatformException? error,
+  bool empty = false,
+}) {
+  if (empty) {
+    return <Object?>[];
+  }
+  if (error == null) {
+    return <Object?>[result];
+  }
+  return <Object?>[error.code, error.message, error.details];
+}
+
 bool _deepEquals(Object? a, Object? b) {
   if (identical(a, b)) {
     return true;
@@ -161,6 +175,21 @@ enum EdgeGenAIRewriteStyle {
   professional,
 }
 
+/// The type of a single tool parameter.
+enum EdgeGenAIToolParameterType {
+  /// A text value.
+  string,
+
+  /// A floating-point number.
+  number,
+
+  /// A whole number.
+  integer,
+
+  /// A true/false value.
+  boolean,
+}
+
 /// The status of an on-device model download.
 enum EdgeGenAIDownloadStatus {
   /// The download has started.
@@ -171,6 +200,137 @@ enum EdgeGenAIDownloadStatus {
 
   /// The download finished and the model is ready to use.
   completed,
+}
+
+/// A single named parameter of a tool, as sent to the platform side.
+///
+/// The field is named `descriptionText` (not `description`) because Pigeon
+/// reserves `description` for Swift's NSObject property.
+class EdgeGenAIToolParameterDefinition {
+  EdgeGenAIToolParameterDefinition({
+    required this.name,
+    required this.descriptionText,
+    required this.type,
+    required this.isRequired,
+  });
+
+  /// The parameter's name, as it appears in the arguments JSON.
+  String name;
+
+  /// What the parameter means, so the model knows what to pass.
+  String descriptionText;
+
+  /// The parameter's value type.
+  EdgeGenAIToolParameterType type;
+
+  /// Whether the model must always provide this parameter.
+  bool isRequired;
+
+  List<Object?> _toList() {
+    return <Object?>[name, descriptionText, type, isRequired];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static EdgeGenAIToolParameterDefinition decode(Object result) {
+    result as List<Object?>;
+    return EdgeGenAIToolParameterDefinition(
+      name: result[0]! as String,
+      descriptionText: result[1]! as String,
+      type: result[2]! as EdgeGenAIToolParameterType,
+      isRequired: result[3]! as bool,
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! EdgeGenAIToolParameterDefinition ||
+        other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(name, other.name) &&
+        _deepEquals(descriptionText, other.descriptionText) &&
+        _deepEquals(type, other.type) &&
+        _deepEquals(isRequired, other.isRequired);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'EdgeGenAIToolParameterDefinition(name: $name, descriptionText: $descriptionText, type: $type, isRequired: $isRequired)';
+  }
+}
+
+/// The model-facing description of a tool the app exposes to the model.
+///
+/// The tool's implementation stays in Dart (see `EdgeGenAITool.onCall`);
+/// only this schema crosses to the platform side, which calls back into
+/// Dart via `EdgeGenAIToolExecutorApi` when the model invokes the tool.
+class EdgeGenAIToolDefinition {
+  EdgeGenAIToolDefinition({
+    required this.name,
+    required this.descriptionText,
+    required this.parameters,
+  });
+
+  /// The tool's unique name.
+  String name;
+
+  /// What the tool does, so the model knows when to call it.
+  String descriptionText;
+
+  /// The parameters the model should pass when calling the tool.
+  List<EdgeGenAIToolParameterDefinition> parameters;
+
+  List<Object?> _toList() {
+    return <Object?>[name, descriptionText, parameters];
+  }
+
+  Object encode() {
+    return _toList();
+  }
+
+  static EdgeGenAIToolDefinition decode(Object result) {
+    result as List<Object?>;
+    return EdgeGenAIToolDefinition(
+      name: result[0]! as String,
+      descriptionText: result[1]! as String,
+      parameters: (result[2]! as List<Object?>)
+          .cast<EdgeGenAIToolParameterDefinition>(),
+    );
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  bool operator ==(Object other) {
+    if (other is! EdgeGenAIToolDefinition || other.runtimeType != runtimeType) {
+      return false;
+    }
+    if (identical(this, other)) {
+      return true;
+    }
+    return _deepEquals(name, other.name) &&
+        _deepEquals(descriptionText, other.descriptionText) &&
+        _deepEquals(parameters, other.parameters);
+  }
+
+  @override
+  // ignore: avoid_equals_and_hash_code_on_mutable_classes
+  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
+
+  @override
+  String toString() {
+    return 'EdgeGenAIToolDefinition(name: $name, descriptionText: $descriptionText, parameters: $parameters)';
+  }
 }
 
 /// Optional parameters controlling how the model generates its response.
@@ -293,14 +453,23 @@ class _PigeonCodec extends StandardMessageCodec {
     } else if (value is EdgeGenAIRewriteStyle) {
       buffer.putUint8(131);
       writeValue(buffer, value.index);
-    } else if (value is EdgeGenAIDownloadStatus) {
+    } else if (value is EdgeGenAIToolParameterType) {
       buffer.putUint8(132);
       writeValue(buffer, value.index);
-    } else if (value is EdgeGenAIGenerationOptions) {
+    } else if (value is EdgeGenAIDownloadStatus) {
       buffer.putUint8(133);
+      writeValue(buffer, value.index);
+    } else if (value is EdgeGenAIToolParameterDefinition) {
+      buffer.putUint8(134);
+      writeValue(buffer, value.encode());
+    } else if (value is EdgeGenAIToolDefinition) {
+      buffer.putUint8(135);
+      writeValue(buffer, value.encode());
+    } else if (value is EdgeGenAIGenerationOptions) {
+      buffer.putUint8(136);
       writeValue(buffer, value.encode());
     } else if (value is EdgeGenAIDownloadProgress) {
-      buffer.putUint8(134);
+      buffer.putUint8(137);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -321,10 +490,17 @@ class _PigeonCodec extends StandardMessageCodec {
         return value == null ? null : EdgeGenAIRewriteStyle.values[value];
       case 132:
         final value = readValue(buffer) as int?;
-        return value == null ? null : EdgeGenAIDownloadStatus.values[value];
+        return value == null ? null : EdgeGenAIToolParameterType.values[value];
       case 133:
-        return EdgeGenAIGenerationOptions.decode(readValue(buffer)!);
+        final value = readValue(buffer) as int?;
+        return value == null ? null : EdgeGenAIDownloadStatus.values[value];
       case 134:
+        return EdgeGenAIToolParameterDefinition.decode(readValue(buffer)!);
+      case 135:
+        return EdgeGenAIToolDefinition.decode(readValue(buffer)!);
+      case 136:
+        return EdgeGenAIGenerationOptions.decode(readValue(buffer)!);
+      case 137:
         return EdgeGenAIDownloadProgress.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
@@ -384,7 +560,9 @@ class EdgeGenAIHostApi {
   /// is true; when false, it's a stateless, one-off call that neither reads
   /// nor updates that instance's remembered conversation. [image] is an
   /// optional encoded image (for example PNG or JPEG bytes) sent to the
-  /// model alongside [prompt].
+  /// model alongside [prompt]. [tools] describes the tools the model may
+  /// call during generation; when it does, the platform side invokes the
+  /// matching Dart executor through `EdgeGenAIToolExecutorApi.callTool`.
   ///
   /// Event channels can't carry parameters, so callers must invoke this
   /// immediately before listening to the `generateContentChunk` stream.
@@ -394,6 +572,7 @@ class EdgeGenAIHostApi {
     EdgeGenAIGenerationOptions? options,
     bool useMemory,
     Uint8List? image,
+    List<EdgeGenAIToolDefinition> tools,
   ) async {
     final pigeonVar_channelName =
         'dev.flutter.pigeon.edge_ai.EdgeGenAIHostApi.startGenerateContent$pigeonVar_messageChannelSuffix';
@@ -403,7 +582,7 @@ class EdgeGenAIHostApi {
       binaryMessenger: pigeonVar_binaryMessenger,
     );
     final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(
-      <Object?>[sessionId, prompt, options, useMemory, image],
+      <Object?>[sessionId, prompt, options, useMemory, image, tools],
     );
     final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
 
@@ -523,6 +702,63 @@ class EdgeGenAIHostApi {
       isNullValid: false,
     );
     return pigeonVar_replyValue! as String;
+  }
+}
+
+/// Calls from the platform side back into Dart, where tool implementations
+/// live.
+abstract class EdgeGenAIToolExecutorApi {
+  static const MessageCodec<Object?> pigeonChannelCodec = _PigeonCodec();
+
+  /// Runs the Dart executor of the tool named [toolName] (registered by the
+  /// `EdgeGenAIPrompt` instance identified by [sessionId]) with the
+  /// JSON-encoded [argumentsJson] the model provided, and returns the
+  /// tool's result for the model to continue generating with.
+  Future<String> callTool(
+    String sessionId,
+    String toolName,
+    String argumentsJson,
+  );
+
+  static void setUp(
+    EdgeGenAIToolExecutorApi? api, {
+    BinaryMessenger? binaryMessenger,
+    String messageChannelSuffix = '',
+  }) {
+    messageChannelSuffix = messageChannelSuffix.isNotEmpty
+        ? '.$messageChannelSuffix'
+        : '';
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+        'dev.flutter.pigeon.edge_ai.EdgeGenAIToolExecutorApi.callTool$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          final List<Object?> args = message! as List<Object?>;
+          final String arg_sessionId = args[0]! as String;
+          final String arg_toolName = args[1]! as String;
+          final String arg_argumentsJson = args[2]! as String;
+          try {
+            final String output = await api.callTool(
+              arg_sessionId,
+              arg_toolName,
+              arg_argumentsJson,
+            );
+            return wrapResponse(result: output);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
+          }
+        });
+      }
+    }
   }
 }
 

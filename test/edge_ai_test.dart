@@ -11,6 +11,7 @@ class MockEdgeGenAIPlatform
     implements EdgeGenAIPlatform {
   final List<String> generateContentSessionIds = [];
   final List<String> resetConversationSessionIds = [];
+  final List<List<EdgeGenAITool>> generateContentTools = [];
 
   @override
   Future<EdgeGenAIAvailability> checkAvailability(EdgeGenAIFeature feature) =>
@@ -29,8 +30,10 @@ class MockEdgeGenAIPlatform
     EdgeGenAIGenerationOptions? options,
     bool useMemory = false,
     Uint8List? image,
+    List<EdgeGenAITool> tools = const [],
   }) {
     generateContentSessionIds.add(sessionId);
+    generateContentTools.add(tools);
     return Stream.value('a generated response');
   }
 
@@ -109,6 +112,23 @@ void main() {
     expect(fakePlatform.resetConversationSessionIds, [
       fakePlatform.generateContentSessionIds.first,
     ]);
+  });
+
+  test('generateContent passes the instance tools to the platform', () async {
+    final tool = EdgeGenAITool(
+      name: 'get_weather',
+      description: 'Gets the weather.',
+      parameters: [
+        EdgeGenAIToolParameter(name: 'city', description: 'The city.'),
+      ],
+      onCall: (_) async => 'sunny',
+    );
+
+    await EdgeGenAIPrompt(
+      tools: [tool],
+    ).generateContent('a prompt').drain<void>();
+
+    expect(fakePlatform.generateContentTools.single.single.name, 'get_weather');
   });
 
   test('summarize', () async {

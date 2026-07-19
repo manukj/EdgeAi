@@ -94,7 +94,23 @@ class _ChatPageState extends State<ChatPage>
   EdgeGenAIDownloadProgress? _downloadProgress;
   final List<_ChatMessage> _messages = [];
   bool _isGenerating = false;
-  var _prompt = EdgeGenAIPrompt(useMemory: true);
+  var _prompt = _buildPrompt(useMemory: true);
+
+  /// Builds the chat's prompt instance. The demo tool lets prompts like
+  /// "What time is it right now?" work: the model calls back into this
+  /// Dart function during generation.
+  static EdgeGenAIPrompt _buildPrompt({required bool useMemory}) {
+    return EdgeGenAIPrompt(
+      useMemory: useMemory,
+      tools: [
+        EdgeGenAITool(
+          name: 'get_current_time',
+          description: 'Gets the current date and time.',
+          onCall: (_) async => DateTime.now().toString(),
+        ),
+      ],
+    );
+  }
   final _promptController = TextEditingController(
     text: 'Write a 3 sentence story about a magical dog.',
   );
@@ -199,7 +215,7 @@ class _ChatPageState extends State<ChatPage>
     // useMemory is fixed per EdgeGenAIPrompt instance, so switching it means
     // starting a fresh conversation on a new instance.
     setState(() {
-      _prompt = EdgeGenAIPrompt(useMemory: useMemory);
+      _prompt = _buildPrompt(useMemory: useMemory);
       _messages.clear();
     });
   }

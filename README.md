@@ -14,7 +14,7 @@ download lifecycle. Every class exposes `checkAvailability()` and
 
 | Class | Task | Details |
 | --- | --- | --- |
-| `EdgeGenAIPrompt` | `generateContent()` | Streams the model's response to a free-form prompt as it's generated, with optional `temperature` / `maxOutputTokens` controls, an optional image input, and optional per-instance conversation memory. |
+| `EdgeGenAIPrompt` | `generateContent()` | Streams the model's response to a free-form prompt as it's generated, with optional `temperature` / `maxOutputTokens` controls, an optional image input, optional per-instance conversation memory, and optional tool (function) calling. |
 | `EdgeGenAISummarizer` | `summarize()` | Summarizes text as bullet points. |
 | `EdgeGenAIProofreader` | `proofread()` | Fixes grammar, spelling, and punctuation without changing the text's meaning. |
 | `EdgeGenAIRewriter` | `rewrite()` | Rewrites text in a chosen `EdgeGenAIRewriteStyle` (rephrase, elaborate, emojify, shorten, friendly, professional). |
@@ -52,6 +52,44 @@ image regardless of what iOS could support. On iOS, image input requires
 iOS 27+ (Foundation Models' `Attachment`, currently Beta) and building with
 Xcode 27+; on earlier OS/SDK versions the image features report unavailable.
 
+### Tool (function) calling
+
+Give an `EdgeGenAIPrompt` instance a list of `EdgeGenAITool`s and the model
+can call back into your Dart code while generating. Tools are fixed per
+instance (not per call) because iOS binds them to the native session that
+carries the conversation. On iOS this uses Foundation Models' native `Tool`
+protocol; on Android it's emulated with prompting (see the note below) —
+the model is asked to reply with a tool-call JSON object, the plugin runs
+your Dart function, feeds the result back, and returns the final answer.
+On Android the final answer arrives as a single event rather than
+streaming, since intermediate rounds are tool-call JSON.
+
+```dart
+final assistant = EdgeGenAIPrompt(
+  tools: [
+    EdgeGenAITool(
+      name: 'get_weather',
+      description: 'Gets the current weather for a city.',
+      parameters: [
+        EdgeGenAIToolParameter(
+          name: 'city',
+          description: 'The city to get the weather for.',
+        ),
+      ],
+      onCall: (arguments) async {
+        return lookUpWeather(arguments['city'] as String? ?? '');
+      },
+    ),
+  ],
+);
+
+await for (final chunk in assistant.generateContent(
+  'Should I bring an umbrella in Oslo today?',
+)) {
+  print(chunk);
+}
+```
+
 ## Beta / stability notes
 
 - **Android's backend is Beta.** ML Kit's GenAI APIs are explicitly
@@ -64,13 +102,18 @@ Xcode 27+; on earlier OS/SDK versions the image features report unavailable.
   `GenerationOptions`) are stable; image input additionally uses
   `Attachment`, which is iOS 27+ and still marked Beta by Apple.
   See [Foundation Models](https://developer.apple.com/documentation/foundationmodels).
-- **No function/tool calling yet.** This was investigated for both
-  platforms: Apple's Foundation Models supports it natively via the
-  `Tool` protocol, but Google's ML Kit GenAI Prompt API (Gemini Nano) does
-  not — confirmed by direct testing, including with Google's
+- **Tool calling on Android is emulated, and best-effort.** Apple's
+  Foundation Models supports tool calling natively via the `Tool`
+  protocol, and that's what iOS uses. Google's ML Kit GenAI Prompt API
+  (Gemini Nano) has no native support — confirmed by direct testing,
+  including with Google's
   [Agent Development Kit](https://developer.android.com/ai/adk), which
   correctly sends a tool schema to the model but the model never
-  actually invokes it. Not implemented in this plugin.
+  actually invokes it. On Android this plugin therefore *emulates* tool
+  calling by instructing the model to reply with a tool-call JSON object
+  and looping tool results back into the prompt; the small on-device
+  model may still answer directly instead of calling a tool, so treat
+  Android tool calling as experimental.
 
 ## Platform requirements
 

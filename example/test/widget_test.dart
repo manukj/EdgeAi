@@ -7,6 +7,9 @@ void main() {
     await tester.pumpWidget(const MyApp());
 
     expect(find.text('Chat'), findsOneWidget);
-    expect(find.text('Text tools'), findsOneWidget);
+    expect(find.text('Summarize'), findsOneWidget);
+    expect(find.text('Proofread'), findsOneWidget);
+    expect(find.text('Rewrite'), findsOneWidget);
+    expect(find.text('Describe image'), findsOneWidget);
   });
 }

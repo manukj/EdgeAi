@@ -73,6 +73,68 @@ enum EdgeGenAIRewriteStyle {
   professional,
 }
 
+/// The type of a single tool parameter.
+enum EdgeGenAIToolParameterType {
+  /// A text value.
+  string,
+
+  /// A floating-point number.
+  number,
+
+  /// A whole number.
+  integer,
+
+  /// A true/false value.
+  boolean,
+}
+
+/// A single named parameter of a tool, as sent to the platform side.
+///
+/// The field is named `descriptionText` (not `description`) because Pigeon
+/// reserves `description` for Swift's NSObject property.
+class EdgeGenAIToolParameterDefinition {
+  EdgeGenAIToolParameterDefinition({
+    required this.name,
+    required this.descriptionText,
+    required this.type,
+    required this.isRequired,
+  });
+
+  /// The parameter's name, as it appears in the arguments JSON.
+  final String name;
+
+  /// What the parameter means, so the model knows what to pass.
+  final String descriptionText;
+
+  /// The parameter's value type.
+  final EdgeGenAIToolParameterType type;
+
+  /// Whether the model must always provide this parameter.
+  final bool isRequired;
+}
+
+/// The model-facing description of a tool the app exposes to the model.
+///
+/// The tool's implementation stays in Dart (see `EdgeGenAITool.onCall`);
+/// only this schema crosses to the platform side, which calls back into
+/// Dart via `EdgeGenAIToolExecutorApi` when the model invokes the tool.
+class EdgeGenAIToolDefinition {
+  EdgeGenAIToolDefinition({
+    required this.name,
+    required this.descriptionText,
+    required this.parameters,
+  });
+
+  /// The tool's unique name.
+  final String name;
+
+  /// What the tool does, so the model knows when to call it.
+  final String descriptionText;
+
+  /// The parameters the model should pass when calling the tool.
+  final List<EdgeGenAIToolParameterDefinition> parameters;
+}
+
 /// Optional parameters controlling how the model generates its response.
 ///
 /// Only fields supported by both Android and iOS are exposed here.
@@ -100,7 +162,9 @@ abstract class EdgeGenAIHostApi {
   /// is true; when false, it's a stateless, one-off call that neither reads
   /// nor updates that instance's remembered conversation. [image] is an
   /// optional encoded image (for example PNG or JPEG bytes) sent to the
-  /// model alongside [prompt].
+  /// model alongside [prompt]. [tools] describes the tools the model may
+  /// call during generation; when it does, the platform side invokes the
+  /// matching Dart executor through `EdgeGenAIToolExecutorApi.callTool`.
   ///
   /// Event channels can't carry parameters, so callers must invoke this
   /// immediately before listening to the `generateContentChunk` stream.
@@ -110,6 +174,7 @@ abstract class EdgeGenAIHostApi {
     EdgeGenAIGenerationOptions? options,
     bool useMemory,
     Uint8List? image,
+    List<EdgeGenAIToolDefinition> tools,
   );
 
   /// Clears the conversation history remembered for [sessionId] so that
@@ -132,6 +197,18 @@ abstract class EdgeGenAIHostApi {
   /// bytes) and returns the description.
   @async
   String describeImage(Uint8List imageBytes);
+}
+
+/// Calls from the platform side back into Dart, where tool implementations
+/// live.
+@FlutterApi()
+abstract class EdgeGenAIToolExecutorApi {
+  /// Runs the Dart executor of the tool named [toolName] (registered by the
+  /// `EdgeGenAIPrompt` instance identified by [sessionId]) with the
+  /// JSON-encoded [argumentsJson] the model provided, and returns the
+  /// tool's result for the model to continue generating with.
+  @async
+  String callTool(String sessionId, String toolName, String argumentsJson);
 }
 
 /// The status of an on-device model download.

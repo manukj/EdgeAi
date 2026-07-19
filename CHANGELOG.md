@@ -1,3 +1,13 @@
+## 0.2.0
+
+* Tool (function) calling: pass `EdgeGenAITool`s to `EdgeGenAIPrompt` and
+  the model can call back into your Dart code while generating. Uses
+  Foundation Models' native `Tool` protocol on iOS; emulated with
+  prompting on Android (experimental — ML Kit's Prompt API has no native
+  support, so the small on-device model may answer directly instead of
+  calling a tool, and the final answer arrives as a single event rather
+  than streaming).
+
 ## 0.1.0
 
 **Breaking changes**
