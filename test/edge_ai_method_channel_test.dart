@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:edge_ai/edge_gen_ai_method_channel.dart';
@@ -143,7 +144,13 @@ void main() {
     // The tool's schema crossed to the platform side...
     final definition = sentToolDefinitions!.single as EdgeGenAIToolDefinition;
     expect(definition.name, 'get_weather');
-    expect(definition.parameters.single.name, 'city');
+    expect(jsonDecode(definition.parametersSchemaJson), {
+      'type': 'object',
+      'properties': {
+        'city': {'type': 'string', 'description': 'The city.'},
+      },
+      'required': ['city'],
+    });
 
     // ...and a platform-side tool call reaches the Dart executor.
     final replyCompleter = Completer<ByteData?>();

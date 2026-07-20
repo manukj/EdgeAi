@@ -25,7 +25,8 @@ class ParsedToolCall(
 object ToolPrompting {
     /**
      * Builds the instructions prepended to the user's prompt that describe
-     * [tools] and how the model should call them.
+     * [tools] and how the model should call them. Each tool's arguments are
+     * described by the JSON Schema built on the Dart side, embedded as-is.
      */
     fun buildToolPreamble(tools: List<EdgeGenAIToolDefinition>): String =
         buildString {
@@ -35,23 +36,13 @@ object ToolPrompting {
                 append(tool.name)
                 append(": ")
                 append(tool.descriptionText)
-                append(" Parameters: ")
-                if (tool.parameters.isEmpty()) {
-                    appendLine("none")
-                } else {
-                    appendLine(
-                        tool.parameters.joinToString(", ") { parameter ->
-                            val optional = if (parameter.isRequired) "" else ", optional"
-                            "\"${parameter.name}\" (${parameter.type.name.lowercase()}$optional): " +
-                                parameter.descriptionText
-                        }
-                    )
-                }
+                append(" Arguments JSON schema: ")
+                appendLine(tool.parametersSchemaJson)
             }
             appendLine(
                 "To use a tool, reply with ONLY a JSON object of the form " +
-                    "{\"tool\": \"<tool name>\", \"arguments\": {\"<parameter>\": <value>}} " +
-                    "and nothing else."
+                    "{\"tool\": \"<tool name>\", \"arguments\": <arguments object " +
+                    "matching the tool's schema>} and nothing else."
             )
             append(
                 "If no tool is needed, answer the user directly without JSON."

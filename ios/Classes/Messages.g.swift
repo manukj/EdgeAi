@@ -240,18 +240,6 @@ enum EdgeGenAIRewriteStyle: Int, CaseIterable {
   case professional = 5
 }
 
-/// The type of a single tool parameter.
-enum EdgeGenAIToolParameterType: Int, CaseIterable {
-  /// A text value.
-  case string = 0
-  /// A floating-point number.
-  case number = 1
-  /// A whole number.
-  case integer = 2
-  /// A true/false value.
-  case boolean = 3
-}
-
 /// The status of an on-device model download.
 enum EdgeGenAIDownloadStatus: Int, CaseIterable {
   /// The download has started.
@@ -262,70 +250,14 @@ enum EdgeGenAIDownloadStatus: Int, CaseIterable {
   case completed = 2
 }
 
-/// A single named parameter of a tool, as sent to the platform side.
-///
-/// The field is named `descriptionText` (not `description`) because Pigeon
-/// reserves `description` for Swift's NSObject property.
-///
-/// Generated class from Pigeon that represents data sent in messages.
-struct EdgeGenAIToolParameterDefinition: Hashable, CustomStringConvertible {
-  /// The parameter's name, as it appears in the arguments JSON.
-  var name: String
-  /// What the parameter means, so the model knows what to pass.
-  var descriptionText: String
-  /// The parameter's value type.
-  var type: EdgeGenAIToolParameterType
-  /// Whether the model must always provide this parameter.
-  var isRequired: Bool
-
-
-  // swift-format-ignore: AlwaysUseLowerCamelCase
-  static func fromList(_ pigeonVar_list: [Any?]) -> EdgeGenAIToolParameterDefinition? {
-    let name = pigeonVar_list[0] as! String
-    let descriptionText = pigeonVar_list[1] as! String
-    let type = pigeonVar_list[2] as! EdgeGenAIToolParameterType
-    let isRequired = pigeonVar_list[3] as! Bool
-
-    return EdgeGenAIToolParameterDefinition(
-      name: name,
-      descriptionText: descriptionText,
-      type: type,
-      isRequired: isRequired
-    )
-  }
-  func toList() -> [Any?] {
-    return [
-      name,
-      descriptionText,
-      type,
-      isRequired,
-    ]
-  }
-  static func == (lhs: EdgeGenAIToolParameterDefinition, rhs: EdgeGenAIToolParameterDefinition) -> Bool {
-    if Swift.type(of: lhs) != Swift.type(of: rhs) {
-      return false
-    }
-    return MessagesPigeonInternal.deepEquals(lhs.name, rhs.name) && MessagesPigeonInternal.deepEquals(lhs.descriptionText, rhs.descriptionText) && MessagesPigeonInternal.deepEquals(lhs.type, rhs.type) && MessagesPigeonInternal.deepEquals(lhs.isRequired, rhs.isRequired)
-  }
-
-  func hash(into hasher: inout Hasher) {
-    hasher.combine("EdgeGenAIToolParameterDefinition")
-    MessagesPigeonInternal.deepHash(value: name, hasher: &hasher)
-    MessagesPigeonInternal.deepHash(value: descriptionText, hasher: &hasher)
-    MessagesPigeonInternal.deepHash(value: type, hasher: &hasher)
-    MessagesPigeonInternal.deepHash(value: isRequired, hasher: &hasher)
-  }
-
-  public var description: String {
-    return "EdgeGenAIToolParameterDefinition(name: \(String(describing: name)), descriptionText: \(String(describing: descriptionText)), type: \(String(describing: type)), isRequired: \(String(describing: isRequired)))"
-  }
-}
-
 /// The model-facing description of a tool the app exposes to the model.
 ///
 /// The tool's implementation stays in Dart (see `EdgeGenAITool.onCall`);
 /// only this schema crosses to the platform side, which calls back into
 /// Dart via `EdgeGenAIToolExecutorApi` when the model invokes the tool.
+///
+/// The description field is named `descriptionText` (not `description`)
+/// because Pigeon reserves `description` for Swift's NSObject property.
 ///
 /// Generated class from Pigeon that represents data sent in messages.
 struct EdgeGenAIToolDefinition: Hashable, CustomStringConvertible {
@@ -333,45 +265,56 @@ struct EdgeGenAIToolDefinition: Hashable, CustomStringConvertible {
   var name: String
   /// What the tool does, so the model knows when to call it.
   var descriptionText: String
-  /// The parameters the model should pass when calling the tool.
-  var parameters: [EdgeGenAIToolParameterDefinition]
+  /// A JSON Schema document (as JSON text) describing the tool's arguments
+  /// object: `{"type": "object", "properties": {...}, "required": [...]}`.
+  ///
+  /// It's carried as JSON text rather than typed Pigeon classes because
+  /// schemas are recursive (objects nest objects, arrays have item
+  /// schemas), which Pigeon data classes can't express. The supported
+  /// subset — mirroring what Foundation Models' `DynamicGenerationSchema`
+  /// can enforce — is: `type` (string/number/integer/boolean/array/object),
+  /// `description`, `enum` (strings), `minimum`/`maximum` (numbers),
+  /// `items`/`minItems`/`maxItems` (arrays), and `properties`/`required`
+  /// (objects). The `EdgeGenAIToolSchema` factories in Dart only build
+  /// this subset.
+  var parametersSchemaJson: String
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
   static func fromList(_ pigeonVar_list: [Any?]) -> EdgeGenAIToolDefinition? {
     let name = pigeonVar_list[0] as! String
     let descriptionText = pigeonVar_list[1] as! String
-    let parameters = pigeonVar_list[2] as! [EdgeGenAIToolParameterDefinition]
+    let parametersSchemaJson = pigeonVar_list[2] as! String
 
     return EdgeGenAIToolDefinition(
       name: name,
       descriptionText: descriptionText,
-      parameters: parameters
+      parametersSchemaJson: parametersSchemaJson
     )
   }
   func toList() -> [Any?] {
     return [
       name,
       descriptionText,
-      parameters,
+      parametersSchemaJson,
     ]
   }
   static func == (lhs: EdgeGenAIToolDefinition, rhs: EdgeGenAIToolDefinition) -> Bool {
     if Swift.type(of: lhs) != Swift.type(of: rhs) {
       return false
     }
-    return MessagesPigeonInternal.deepEquals(lhs.name, rhs.name) && MessagesPigeonInternal.deepEquals(lhs.descriptionText, rhs.descriptionText) && MessagesPigeonInternal.deepEquals(lhs.parameters, rhs.parameters)
+    return MessagesPigeonInternal.deepEquals(lhs.name, rhs.name) && MessagesPigeonInternal.deepEquals(lhs.descriptionText, rhs.descriptionText) && MessagesPigeonInternal.deepEquals(lhs.parametersSchemaJson, rhs.parametersSchemaJson)
   }
 
   func hash(into hasher: inout Hasher) {
     hasher.combine("EdgeGenAIToolDefinition")
     MessagesPigeonInternal.deepHash(value: name, hasher: &hasher)
     MessagesPigeonInternal.deepHash(value: descriptionText, hasher: &hasher)
-    MessagesPigeonInternal.deepHash(value: parameters, hasher: &hasher)
+    MessagesPigeonInternal.deepHash(value: parametersSchemaJson, hasher: &hasher)
   }
 
   public var description: String {
-    return "EdgeGenAIToolDefinition(name: \(String(describing: name)), descriptionText: \(String(describing: descriptionText)), parameters: \(String(describing: parameters)))"
+    return "EdgeGenAIToolDefinition(name: \(String(describing: name)), descriptionText: \(String(describing: descriptionText)), parametersSchemaJson: \(String(describing: parametersSchemaJson)))"
   }
 }
 
@@ -491,22 +434,14 @@ private class MessagesPigeonCodecReader: FlutterStandardReader {
     case 132:
       let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
       if let enumResultAsInt = enumResultAsInt {
-        return EdgeGenAIToolParameterType(rawValue: enumResultAsInt)
-      }
-      return nil
-    case 133:
-      let enumResultAsInt: Int? = nilOrValue(self.readValue() as! Int?)
-      if let enumResultAsInt = enumResultAsInt {
         return EdgeGenAIDownloadStatus(rawValue: enumResultAsInt)
       }
       return nil
-    case 134:
-      return EdgeGenAIToolParameterDefinition.fromList(self.readValue() as! [Any?])
-    case 135:
+    case 133:
       return EdgeGenAIToolDefinition.fromList(self.readValue() as! [Any?])
-    case 136:
+    case 134:
       return EdgeGenAIGenerationOptions.fromList(self.readValue() as! [Any?])
-    case 137:
+    case 135:
       return EdgeGenAIDownloadProgress.fromList(self.readValue() as! [Any?])
     default:
       return super.readValue(ofType: type)
@@ -525,23 +460,17 @@ private class MessagesPigeonCodecWriter: FlutterStandardWriter {
     } else if let value = value as? EdgeGenAIRewriteStyle {
       super.writeByte(131)
       super.writeValue(value.rawValue)
-    } else if let value = value as? EdgeGenAIToolParameterType {
+    } else if let value = value as? EdgeGenAIDownloadStatus {
       super.writeByte(132)
       super.writeValue(value.rawValue)
-    } else if let value = value as? EdgeGenAIDownloadStatus {
-      super.writeByte(133)
-      super.writeValue(value.rawValue)
-    } else if let value = value as? EdgeGenAIToolParameterDefinition {
-      super.writeByte(134)
-      super.writeValue(value.toList())
     } else if let value = value as? EdgeGenAIToolDefinition {
-      super.writeByte(135)
+      super.writeByte(133)
       super.writeValue(value.toList())
     } else if let value = value as? EdgeGenAIGenerationOptions {
-      super.writeByte(136)
+      super.writeByte(134)
       super.writeValue(value.toList())
     } else if let value = value as? EdgeGenAIDownloadProgress {
-      super.writeByte(137)
+      super.writeByte(135)
       super.writeValue(value.toList())
     } else {
       super.writeValue(value)

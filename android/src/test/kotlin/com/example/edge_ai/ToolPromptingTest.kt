@@ -10,24 +10,19 @@ internal class ToolPromptingTest {
         EdgeGenAIToolDefinition(
             name = "get_weather",
             descriptionText = "Gets the current weather for a city.",
-            parameters =
-                listOf(
-                    EdgeGenAIToolParameterDefinition(
-                        name = "city",
-                        descriptionText = "The city to get the weather for.",
-                        type = EdgeGenAIToolParameterType.STRING,
-                        isRequired = true,
-                    )
-                ),
+            parametersSchemaJson =
+                """{"type":"object","properties":{"city":{"type":"string",""" +
+                    """"description":"The city to get the weather for."}},""" +
+                    """"required":["city"]}""",
         )
 
     @Test
-    fun buildToolPreamble_describesToolAndParameters() {
+    fun buildToolPreamble_embedsToolSchema() {
         val preamble = ToolPrompting.buildToolPreamble(listOf(weatherTool))
 
         assertTrue(preamble.contains("get_weather"))
         assertTrue(preamble.contains("Gets the current weather for a city."))
-        assertTrue(preamble.contains("\"city\" (string)"))
+        assertTrue(preamble.contains(weatherTool.parametersSchemaJson))
         assertTrue(preamble.contains("{\"tool\":"))
     }
 

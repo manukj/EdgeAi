@@ -101,15 +101,7 @@ class MethodChannelEdgeGenAI extends EdgeGenAIPlatform {
     return EdgeGenAIToolDefinition(
       name: tool.name,
       descriptionText: tool.description,
-      parameters: [
-        for (final parameter in tool.parameters)
-          EdgeGenAIToolParameterDefinition(
-            name: parameter.name,
-            descriptionText: parameter.description,
-            type: parameter.type,
-            isRequired: parameter.isRequired,
-          ),
-      ],
+      parametersSchemaJson: jsonEncode(tool.argumentsJsonSchema()),
     );
   }
 }

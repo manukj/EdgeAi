@@ -90,6 +90,50 @@ await for (final chunk in assistant.generateContent(
 }
 ```
 
+Beyond plain typed parameters, `EdgeGenAIToolSchema` describes richer
+argument shapes — string enums, numeric ranges, arrays with length bounds,
+and nested objects — mirroring what Foundation Models'
+`DynamicGenerationSchema` can *enforce natively* on iOS (the model
+literally cannot produce arguments outside the schema there). On Android
+the same schema is embedded in the prompt as JSON Schema text for the
+model to follow:
+
+```dart
+EdgeGenAITool(
+  name: 'create_reminder',
+  description: 'Creates a reminder.',
+  parameters: [
+    EdgeGenAIToolParameter(
+      name: 'title',
+      description: 'The reminder title.',
+    ),
+    EdgeGenAIToolParameter(
+      name: 'priority',
+      description: 'How urgent the reminder is.',
+      schema: EdgeGenAIToolSchema.string(
+        enumValues: ['low', 'medium', 'high'],
+      ),
+      isRequired: false,
+    ),
+    EdgeGenAIToolParameter(
+      name: 'minutesFromNow',
+      description: 'When the reminder should fire.',
+      schema: EdgeGenAIToolSchema.integer(minimum: 1, maximum: 1440),
+    ),
+    EdgeGenAIToolParameter(
+      name: 'tags',
+      description: 'Labels for the reminder.',
+      schema: EdgeGenAIToolSchema.array(
+        items: EdgeGenAIToolSchema.string(),
+        maxItems: 5,
+      ),
+      isRequired: false,
+    ),
+  ],
+  onCall: (arguments) async => createReminder(arguments),
+)
+```
+
 ## Beta / stability notes
 
 - **Android's backend is Beta.** ML Kit's GenAI APIs are explicitly

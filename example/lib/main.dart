@@ -16,10 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'EdgeGenAi',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: Colors.indigo,
-      ),
+      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
       home: DefaultTabController(
         length: 5,
         child: Scaffold(
@@ -63,10 +60,7 @@ class _ResultCard extends StatelessWidget {
     return Card(
       margin: EdgeInsets.zero,
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(text),
-      ),
+      child: Padding(padding: const EdgeInsets.all(16), child: Text(text)),
     );
   }
 }
@@ -111,6 +105,7 @@ class _ChatPageState extends State<ChatPage>
       ],
     );
   }
+
   final _promptController = TextEditingController(
     text: 'Write a 3 sentence story about a magical dog.',
   );
@@ -245,7 +240,7 @@ class _ChatPageState extends State<ChatPage>
                 child: Text(
                   'Availability: ${_availability?.name ?? 'Checking...'}'
                   '${_downloadProgress != null ? ' — ${_downloadProgress!.status.name}'
-                        '${_downloadProgress!.bytesDownloaded != null ? ' (${_downloadProgress!.bytesDownloaded} bytes)' : ''}' : ''}',
+                            '${_downloadProgress!.bytesDownloaded != null ? ' (${_downloadProgress!.bytesDownloaded} bytes)' : ''}' : ''}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
@@ -255,10 +250,7 @@ class _ChatPageState extends State<ChatPage>
                   child: const Text('Download'),
                 ),
               const Icon(Icons.memory, size: 18),
-              Switch(
-                value: _prompt.useMemory,
-                onChanged: _setUseMemory,
-              ),
+              Switch(value: _prompt.useMemory, onChanged: _setUseMemory),
               IconButton(
                 onPressed: _messages.isEmpty ? null : _resetConversation,
                 icon: const Icon(Icons.refresh),
@@ -737,4 +729,3 @@ class _ImageDescriptionPageState extends State<ImageDescriptionPage>
     );
   }
 }
-

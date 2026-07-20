@@ -7,6 +7,11 @@
   support, so the small on-device model may answer directly instead of
   calling a tool, and the final answer arrives as a single event rather
   than streaming).
+* `EdgeGenAIToolSchema`: rich tool-argument schemas — string enums,
+  numeric ranges, arrays with item schemas and length bounds, and nested
+  objects — matching what Foundation Models' `DynamicGenerationSchema`
+  enforces natively on iOS. Schemas cross the platform boundary as JSON
+  Schema text, which Android embeds directly in the tool-calling prompt.
 
 ## 0.1.0
 

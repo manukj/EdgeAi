@@ -73,56 +73,19 @@ enum EdgeGenAIRewriteStyle {
   professional,
 }
 
-/// The type of a single tool parameter.
-enum EdgeGenAIToolParameterType {
-  /// A text value.
-  string,
-
-  /// A floating-point number.
-  number,
-
-  /// A whole number.
-  integer,
-
-  /// A true/false value.
-  boolean,
-}
-
-/// A single named parameter of a tool, as sent to the platform side.
-///
-/// The field is named `descriptionText` (not `description`) because Pigeon
-/// reserves `description` for Swift's NSObject property.
-class EdgeGenAIToolParameterDefinition {
-  EdgeGenAIToolParameterDefinition({
-    required this.name,
-    required this.descriptionText,
-    required this.type,
-    required this.isRequired,
-  });
-
-  /// The parameter's name, as it appears in the arguments JSON.
-  final String name;
-
-  /// What the parameter means, so the model knows what to pass.
-  final String descriptionText;
-
-  /// The parameter's value type.
-  final EdgeGenAIToolParameterType type;
-
-  /// Whether the model must always provide this parameter.
-  final bool isRequired;
-}
-
 /// The model-facing description of a tool the app exposes to the model.
 ///
 /// The tool's implementation stays in Dart (see `EdgeGenAITool.onCall`);
 /// only this schema crosses to the platform side, which calls back into
 /// Dart via `EdgeGenAIToolExecutorApi` when the model invokes the tool.
+///
+/// The description field is named `descriptionText` (not `description`)
+/// because Pigeon reserves `description` for Swift's NSObject property.
 class EdgeGenAIToolDefinition {
   EdgeGenAIToolDefinition({
     required this.name,
     required this.descriptionText,
-    required this.parameters,
+    required this.parametersSchemaJson,
   });
 
   /// The tool's unique name.
@@ -131,8 +94,19 @@ class EdgeGenAIToolDefinition {
   /// What the tool does, so the model knows when to call it.
   final String descriptionText;
 
-  /// The parameters the model should pass when calling the tool.
-  final List<EdgeGenAIToolParameterDefinition> parameters;
+  /// A JSON Schema document (as JSON text) describing the tool's arguments
+  /// object: `{"type": "object", "properties": {...}, "required": [...]}`.
+  ///
+  /// It's carried as JSON text rather than typed Pigeon classes because
+  /// schemas are recursive (objects nest objects, arrays have item
+  /// schemas), which Pigeon data classes can't express. The supported
+  /// subset — mirroring what Foundation Models' `DynamicGenerationSchema`
+  /// can enforce — is: `type` (string/number/integer/boolean/array/object),
+  /// `description`, `enum` (strings), `minimum`/`maximum` (numbers),
+  /// `items`/`minItems`/`maxItems` (arrays), and `properties`/`required`
+  /// (objects). The `EdgeGenAIToolSchema` factories in Dart only build
+  /// this subset.
+  final String parametersSchemaJson;
 }
 
 /// Optional parameters controlling how the model generates its response.

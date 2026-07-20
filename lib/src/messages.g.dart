@@ -175,21 +175,6 @@ enum EdgeGenAIRewriteStyle {
   professional,
 }
 
-/// The type of a single tool parameter.
-enum EdgeGenAIToolParameterType {
-  /// A text value.
-  string,
-
-  /// A floating-point number.
-  number,
-
-  /// A whole number.
-  integer,
-
-  /// A true/false value.
-  boolean,
-}
-
 /// The status of an on-device model download.
 enum EdgeGenAIDownloadStatus {
   /// The download has started.
@@ -202,84 +187,19 @@ enum EdgeGenAIDownloadStatus {
   completed,
 }
 
-/// A single named parameter of a tool, as sent to the platform side.
-///
-/// The field is named `descriptionText` (not `description`) because Pigeon
-/// reserves `description` for Swift's NSObject property.
-class EdgeGenAIToolParameterDefinition {
-  EdgeGenAIToolParameterDefinition({
-    required this.name,
-    required this.descriptionText,
-    required this.type,
-    required this.isRequired,
-  });
-
-  /// The parameter's name, as it appears in the arguments JSON.
-  String name;
-
-  /// What the parameter means, so the model knows what to pass.
-  String descriptionText;
-
-  /// The parameter's value type.
-  EdgeGenAIToolParameterType type;
-
-  /// Whether the model must always provide this parameter.
-  bool isRequired;
-
-  List<Object?> _toList() {
-    return <Object?>[name, descriptionText, type, isRequired];
-  }
-
-  Object encode() {
-    return _toList();
-  }
-
-  static EdgeGenAIToolParameterDefinition decode(Object result) {
-    result as List<Object?>;
-    return EdgeGenAIToolParameterDefinition(
-      name: result[0]! as String,
-      descriptionText: result[1]! as String,
-      type: result[2]! as EdgeGenAIToolParameterType,
-      isRequired: result[3]! as bool,
-    );
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  bool operator ==(Object other) {
-    if (other is! EdgeGenAIToolParameterDefinition ||
-        other.runtimeType != runtimeType) {
-      return false;
-    }
-    if (identical(this, other)) {
-      return true;
-    }
-    return _deepEquals(name, other.name) &&
-        _deepEquals(descriptionText, other.descriptionText) &&
-        _deepEquals(type, other.type) &&
-        _deepEquals(isRequired, other.isRequired);
-  }
-
-  @override
-  // ignore: avoid_equals_and_hash_code_on_mutable_classes
-  int get hashCode => _deepHash(<Object?>[runtimeType, ..._toList()]);
-
-  @override
-  String toString() {
-    return 'EdgeGenAIToolParameterDefinition(name: $name, descriptionText: $descriptionText, type: $type, isRequired: $isRequired)';
-  }
-}
-
 /// The model-facing description of a tool the app exposes to the model.
 ///
 /// The tool's implementation stays in Dart (see `EdgeGenAITool.onCall`);
 /// only this schema crosses to the platform side, which calls back into
 /// Dart via `EdgeGenAIToolExecutorApi` when the model invokes the tool.
+///
+/// The description field is named `descriptionText` (not `description`)
+/// because Pigeon reserves `description` for Swift's NSObject property.
 class EdgeGenAIToolDefinition {
   EdgeGenAIToolDefinition({
     required this.name,
     required this.descriptionText,
-    required this.parameters,
+    required this.parametersSchemaJson,
   });
 
   /// The tool's unique name.
@@ -288,11 +208,22 @@ class EdgeGenAIToolDefinition {
   /// What the tool does, so the model knows when to call it.
   String descriptionText;
 
-  /// The parameters the model should pass when calling the tool.
-  List<EdgeGenAIToolParameterDefinition> parameters;
+  /// A JSON Schema document (as JSON text) describing the tool's arguments
+  /// object: `{"type": "object", "properties": {...}, "required": [...]}`.
+  ///
+  /// It's carried as JSON text rather than typed Pigeon classes because
+  /// schemas are recursive (objects nest objects, arrays have item
+  /// schemas), which Pigeon data classes can't express. The supported
+  /// subset — mirroring what Foundation Models' `DynamicGenerationSchema`
+  /// can enforce — is: `type` (string/number/integer/boolean/array/object),
+  /// `description`, `enum` (strings), `minimum`/`maximum` (numbers),
+  /// `items`/`minItems`/`maxItems` (arrays), and `properties`/`required`
+  /// (objects). The `EdgeGenAIToolSchema` factories in Dart only build
+  /// this subset.
+  String parametersSchemaJson;
 
   List<Object?> _toList() {
-    return <Object?>[name, descriptionText, parameters];
+    return <Object?>[name, descriptionText, parametersSchemaJson];
   }
 
   Object encode() {
@@ -304,8 +235,7 @@ class EdgeGenAIToolDefinition {
     return EdgeGenAIToolDefinition(
       name: result[0]! as String,
       descriptionText: result[1]! as String,
-      parameters: (result[2]! as List<Object?>)
-          .cast<EdgeGenAIToolParameterDefinition>(),
+      parametersSchemaJson: result[2]! as String,
     );
   }
 
@@ -320,7 +250,7 @@ class EdgeGenAIToolDefinition {
     }
     return _deepEquals(name, other.name) &&
         _deepEquals(descriptionText, other.descriptionText) &&
-        _deepEquals(parameters, other.parameters);
+        _deepEquals(parametersSchemaJson, other.parametersSchemaJson);
   }
 
   @override
@@ -329,7 +259,7 @@ class EdgeGenAIToolDefinition {
 
   @override
   String toString() {
-    return 'EdgeGenAIToolDefinition(name: $name, descriptionText: $descriptionText, parameters: $parameters)';
+    return 'EdgeGenAIToolDefinition(name: $name, descriptionText: $descriptionText, parametersSchemaJson: $parametersSchemaJson)';
   }
 }
 
@@ -453,23 +383,17 @@ class _PigeonCodec extends StandardMessageCodec {
     } else if (value is EdgeGenAIRewriteStyle) {
       buffer.putUint8(131);
       writeValue(buffer, value.index);
-    } else if (value is EdgeGenAIToolParameterType) {
+    } else if (value is EdgeGenAIDownloadStatus) {
       buffer.putUint8(132);
       writeValue(buffer, value.index);
-    } else if (value is EdgeGenAIDownloadStatus) {
-      buffer.putUint8(133);
-      writeValue(buffer, value.index);
-    } else if (value is EdgeGenAIToolParameterDefinition) {
-      buffer.putUint8(134);
-      writeValue(buffer, value.encode());
     } else if (value is EdgeGenAIToolDefinition) {
-      buffer.putUint8(135);
+      buffer.putUint8(133);
       writeValue(buffer, value.encode());
     } else if (value is EdgeGenAIGenerationOptions) {
-      buffer.putUint8(136);
+      buffer.putUint8(134);
       writeValue(buffer, value.encode());
     } else if (value is EdgeGenAIDownloadProgress) {
-      buffer.putUint8(137);
+      buffer.putUint8(135);
       writeValue(buffer, value.encode());
     } else {
       super.writeValue(buffer, value);
@@ -490,17 +414,12 @@ class _PigeonCodec extends StandardMessageCodec {
         return value == null ? null : EdgeGenAIRewriteStyle.values[value];
       case 132:
         final value = readValue(buffer) as int?;
-        return value == null ? null : EdgeGenAIToolParameterType.values[value];
-      case 133:
-        final value = readValue(buffer) as int?;
         return value == null ? null : EdgeGenAIDownloadStatus.values[value];
-      case 134:
-        return EdgeGenAIToolParameterDefinition.decode(readValue(buffer)!);
-      case 135:
+      case 133:
         return EdgeGenAIToolDefinition.decode(readValue(buffer)!);
-      case 136:
+      case 134:
         return EdgeGenAIGenerationOptions.decode(readValue(buffer)!);
-      case 137:
+      case 135:
         return EdgeGenAIDownloadProgress.decode(readValue(buffer)!);
       default:
         return super.readValueOfType(type, buffer);
