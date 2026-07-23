@@ -28,6 +28,8 @@ import com.google.mlkit.genai.summarization.SummarizationRequest
 import com.google.mlkit.genai.summarization.Summarizer
 import com.google.mlkit.genai.summarization.SummarizerOptions
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.guava.await
@@ -39,7 +41,8 @@ private class PendingGenerateContentRequest(
     val prompt: String,
     val options: EdgeGenAIGenerationOptions?,
     val useMemory: Boolean,
-    val image: ByteArray?
+    val image: ByteArray?,
+    val tools: List<EdgeGenAIToolDefinition>
 )
 
 /** EdgeGenAIPlugin */
@@ -114,7 +117,12 @@ class EdgeGenAIPlugin :
         )
         GenerateContentChunkStreamHandler.register(
             flutterPluginBinding.binaryMessenger,
-            EdgeGenAIGenerateContentStreamHandler(scope, generativeModel, histories) {
+            EdgeGenAIGenerateContentStreamHandler(
+                scope,
+                generativeModel,
+                histories,
+                EdgeGenAIToolExecutorApi(flutterPluginBinding.binaryMessenger),
+            ) {
                 pendingRequest.also { pendingRequest = null }
             },
         )
@@ -158,10 +166,11 @@ class EdgeGenAIPlugin :
         prompt: String,
         options: EdgeGenAIGenerationOptions?,
         useMemory: Boolean,
-        image: ByteArray?
+        image: ByteArray?,
+        tools: List<EdgeGenAIToolDefinition>
     ) {
         pendingRequest =
-            PendingGenerateContentRequest(sessionId, prompt, options, useMemory, image)
+            PendingGenerateContentRequest(sessionId, prompt, options, useMemory, image, tools)
     }
 
     override fun resetConversation(sessionId: String) {
@@ -443,13 +452,26 @@ private class ImageDescriptionDownloadStreamHandler(
 /**
  * Starts generation for the request stashed via `startGenerateContent` when Flutter
  * starts listening, and streams the cumulative response text as it's generated.
+ *
+ * When the request carries tools, generation runs as a multi-round loop instead
+ * (see ToolPrompting): each round's full response is checked for a tool-call
+ * JSON object; on a match the matching Dart executor runs via
+ * [EdgeGenAIToolExecutorApi] and its result is fed into the next round. Only
+ * the final answer is emitted, as a single event, since intermediate rounds
+ * are tool-call JSON the caller shouldn't see.
  */
 private class EdgeGenAIGenerateContentStreamHandler(
     private val scope: CoroutineScope,
     private val generativeModel: GenerativeModel,
     private val histories: MutableMap<String, MutableList<Pair<String, String>>>,
+    private val toolExecutorApi: EdgeGenAIToolExecutorApi,
     private val takePendingRequest: () -> PendingGenerateContentRequest?
 ) : GenerateContentChunkStreamHandler() {
+    private companion object {
+        /** Bounds the tool-call loop so a confused model can't spin forever. */
+        const val MAX_TOOL_ROUNDS = 4
+    }
+
     override fun onListen(
         p0: Any?,
         sink: PigeonEventSink<String>
@@ -478,30 +500,106 @@ private class EdgeGenAIGenerateContentStreamHandler(
             sink.error("invalid_image", "The image bytes couldn't be decoded.", null)
             return
         }
-        val generateRequest =
-            if (bitmap != null) {
-                generateContentRequest(ImagePart(bitmap), TextPart(promptWithHistory)) {
-                    request.options?.temperature?.let { temperature = it.toFloat() }
-                    request.options?.maxOutputTokens?.let { maxOutputTokens = it.toInt() }
-                }
-            } else {
-                generateContentRequest(TextPart(promptWithHistory)) {
-                    request.options?.temperature?.let { temperature = it.toFloat() }
-                    request.options?.maxOutputTokens?.let { maxOutputTokens = it.toInt() }
-                }
-            }
         scope.launch {
             try {
-                var cumulativeText = ""
-                generativeModel.generateContentStream(generateRequest).collect { response ->
-                    cumulativeText += response.candidates.first().text
-                    sink.success(cumulativeText)
-                }
-                history?.add(request.prompt to cumulativeText)
+                val finalText =
+                    if (request.tools.isEmpty()) {
+                        streamDirectly(request, promptWithHistory, bitmap, sink)
+                    } else {
+                        runToolLoop(request, promptWithHistory, bitmap, sink)
+                    }
+                history?.add(request.prompt to finalText)
                 sink.endOfStream()
             } catch (e: Exception) {
                 sink.error("generate_content_failed", e.message, null)
             }
+        }
+    }
+
+    /** The plain no-tools path: streams cumulative text as it's generated. */
+    private suspend fun streamDirectly(
+        request: PendingGenerateContentRequest,
+        prompt: String,
+        bitmap: android.graphics.Bitmap?,
+        sink: PigeonEventSink<String>
+    ): String {
+        var cumulativeText = ""
+        generativeModel
+            .generateContentStream(buildGenerateRequest(prompt, bitmap, request.options))
+            .collect { response ->
+                cumulativeText += response.candidates.first().text
+                sink.success(cumulativeText)
+            }
+        return cumulativeText
+    }
+
+    /** The tool-emulation path: loops rounds until the model stops calling tools. */
+    private suspend fun runToolLoop(
+        request: PendingGenerateContentRequest,
+        prompt: String,
+        bitmap: android.graphics.Bitmap?,
+        sink: PigeonEventSink<String>
+    ): String {
+        var roundPrompt =
+            ToolPrompting.buildToolPreamble(request.tools) + "\n\nUser request: " + prompt
+        var rounds = 0
+        while (true) {
+            var responseText = ""
+            generativeModel
+                .generateContentStream(
+                    buildGenerateRequest(roundPrompt, bitmap, request.options)
+                )
+                .collect { response ->
+                    responseText += response.candidates.first().text
+                }
+            val toolCall =
+                if (rounds < MAX_TOOL_ROUNDS) {
+                    ToolPrompting.parseToolCall(responseText, request.tools)
+                } else {
+                    null
+                }
+            if (toolCall == null) {
+                sink.success(responseText)
+                return responseText
+            }
+            rounds++
+            val toolResult =
+                callDartTool(request.sessionId, toolCall.toolName, toolCall.argumentsJson)
+            roundPrompt += ToolPrompting.buildToolResultContinuation(toolCall, toolResult)
+        }
+    }
+
+    /**
+     * Runs the tool's Dart implementation and returns its result. Executor
+     * failures come back as text for the model to react to, rather than
+     * aborting the whole generation.
+     */
+    private suspend fun callDartTool(
+        sessionId: String,
+        toolName: String,
+        argumentsJson: String
+    ): String =
+        suspendCoroutine { continuation ->
+            toolExecutorApi.callTool(sessionId, toolName, argumentsJson) { result ->
+                continuation.resume(
+                    result.getOrElse { e -> "The tool failed with an error: ${e.message}" }
+                )
+            }
+        }
+
+    private fun buildGenerateRequest(
+        prompt: String,
+        bitmap: android.graphics.Bitmap?,
+        options: EdgeGenAIGenerationOptions?
+    ) = if (bitmap != null) {
+        generateContentRequest(ImagePart(bitmap), TextPart(prompt)) {
+            options?.temperature?.let { temperature = it.toFloat() }
+            options?.maxOutputTokens?.let { maxOutputTokens = it.toInt() }
+        }
+    } else {
+        generateContentRequest(TextPart(prompt)) {
+            options?.temperature?.let { temperature = it.toFloat() }
+            options?.maxOutputTokens?.let { maxOutputTokens = it.toInt() }
         }
     }
 }

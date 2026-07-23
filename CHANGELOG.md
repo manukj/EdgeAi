@@ -4,6 +4,9 @@
 * Migrates the Android build to built-in Kotlin on Android Gradle Plugin
   9+, while still applying the `kotlin-android` plugin on older AGP
   versions, so the minimum supported Flutter/Dart version is unchanged.
+* Adds tool (function) calling through `EdgeGenAITool`.
+  iOS uses Foundation Models' native tool support; Android emulates tool
+  calls because ML Kit GenAI does not support them natively.
 
 ## 0.1.1
 

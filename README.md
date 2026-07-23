@@ -30,6 +30,42 @@ that shared system model when it isn't ready yet.
 | `EdgeGenAIRewriter` | `rewrite()` | Rewrites text in a chosen `EdgeGenAIRewriteStyle`. | ![rewrite](https://raw.githubusercontent.com/manukj/EdgeAi/master/output/rewrite.png) |
 | `EdgeGenAIImageDescriber` | `describeImage()` | Describes an image. | ![describeImage](https://raw.githubusercontent.com/manukj/EdgeAi/master/output/describeImage.png) |
 
+### Tool (function) calling
+
+Add `EdgeGenAITool`s to an `EdgeGenAIPrompt`. When the model uses a tool,
+the plugin runs your Dart callback and gives its result back to the model.
+
+> **Important:** Function calling is native on iOS through Foundation Models.
+> Android ML Kit does not natively support function calling. On Android, this
+> plugin emulates a function call with JSON, so the model may answer directly
+> instead of calling your function.
+
+```dart
+final assistant = EdgeGenAIPrompt(
+  tools: [
+    EdgeGenAITool(
+      name: 'get_weather',
+      description: 'Gets the current weather for a city.',
+      parameters: [
+        EdgeGenAIToolParameter(
+          name: 'city',
+          description: 'The city to get the weather for.',
+        ),
+      ],
+      onCall: (arguments) async {
+        return lookUpWeather(arguments['city'] as String? ?? '');
+      },
+    ),
+  ],
+);
+
+await for (final chunk in assistant.generateContent(
+  'Should I bring an umbrella in Oslo today?',
+)) {
+  print(chunk);
+}
+```
+
 Every class exposes `checkAvailability()` and `downloadModel()` alongside its
 task method. On Android these map to ML Kit GenAI's dedicated APIs; on iOS
 they're task-specific prompts to the same Foundation Model that backs
