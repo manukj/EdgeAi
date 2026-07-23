@@ -1,4 +1,4 @@
-package com.example.edge_ai
+package com.manukj.edge_gen_ai
 
 import org.json.JSONException
 import org.json.JSONObject

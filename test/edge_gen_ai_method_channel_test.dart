@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:edge_ai/edge_gen_ai_method_channel.dart';
-import 'package:edge_ai/edge_gen_ai_tool.dart';
-import 'package:edge_ai/src/messages.g.dart';
+import 'package:edge_gen_ai/edge_gen_ai_method_channel.dart';
+import 'package:edge_gen_ai/edge_gen_ai_tool.dart';
+import 'package:edge_gen_ai/src/messages.g.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -17,7 +17,7 @@ void main() {
 
   void mockChannel(String method, Object? response) {
     messenger.setMockMessageHandler(
-      'dev.flutter.pigeon.edge_ai.EdgeGenAIHostApi.$method',
+      'dev.flutter.pigeon.edge_gen_ai.EdgeGenAIHostApi.$method',
       (ByteData? message) async {
         return EdgeGenAIHostApi.pigeonChannelCodec.encodeMessage(<Object?>[
           response,
@@ -28,7 +28,7 @@ void main() {
 
   void unmockChannel(String method) {
     messenger.setMockMessageHandler(
-      'dev.flutter.pigeon.edge_ai.EdgeGenAIHostApi.$method',
+      'dev.flutter.pigeon.edge_gen_ai.EdgeGenAIHostApi.$method',
       null,
     );
   }
@@ -46,7 +46,7 @@ void main() {
 
   test('downloadModel listens to the feature-specific channel', () async {
     const channelName =
-        'dev.flutter.pigeon.edge_ai.EdgeGenAIEventApi.summarizationDownloadProgress';
+        'dev.flutter.pigeon.edge_gen_ai.EdgeGenAIEventApi.summarizationDownloadProgress';
     final progress = EdgeGenAIDownloadProgress(
       status: EdgeGenAIDownloadStatus.completed,
     );
@@ -70,9 +70,9 @@ void main() {
 
   test('generateContent', () async {
     const hostChannel =
-        'dev.flutter.pigeon.edge_ai.EdgeGenAIHostApi.startGenerateContent';
+        'dev.flutter.pigeon.edge_gen_ai.EdgeGenAIHostApi.startGenerateContent';
     const eventChannel =
-        'dev.flutter.pigeon.edge_ai.EdgeGenAIEventApi.generateContentChunk';
+        'dev.flutter.pigeon.edge_gen_ai.EdgeGenAIEventApi.generateContentChunk';
 
     messenger.setMockMessageHandler(hostChannel, (ByteData? message) async {
       return EdgeGenAIHostApi.pigeonChannelCodec.encodeMessage(<Object?>[null]);
@@ -99,11 +99,11 @@ void main() {
 
   test('a platform tool call runs the registered Dart executor', () async {
     const hostChannel =
-        'dev.flutter.pigeon.edge_ai.EdgeGenAIHostApi.startGenerateContent';
+        'dev.flutter.pigeon.edge_gen_ai.EdgeGenAIHostApi.startGenerateContent';
     const eventChannel =
-        'dev.flutter.pigeon.edge_ai.EdgeGenAIEventApi.generateContentChunk';
+        'dev.flutter.pigeon.edge_gen_ai.EdgeGenAIEventApi.generateContentChunk';
     const toolChannel =
-        'dev.flutter.pigeon.edge_ai.EdgeGenAIToolExecutorApi.callTool';
+        'dev.flutter.pigeon.edge_gen_ai.EdgeGenAIToolExecutorApi.callTool';
 
     Map<String, Object?>? receivedArguments;
     final tool = EdgeGenAITool(

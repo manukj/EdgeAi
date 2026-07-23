@@ -1,6 +1,6 @@
 # edge_ai_example
 
-Demonstrates how to use the edge_ai plugin.
+Demonstrates how to use the edge_gen_ai plugin.
 
 ## Getting Started
 

@@ -8,7 +8,7 @@ val flutterSdkPath =
         ?: error("flutter.sdk is not set in local.properties")
 val flutterEngineVersion = file("$flutterSdkPath/bin/internal/engine.version").readText().trim()
 
-group = "com.example.edge_ai"
+group = "com.manukj.edge_gen_ai"
 version = "1.0-SNAPSHOT"
 
 buildscript {
@@ -33,21 +33,22 @@ allprojects {
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+}
+
+val agpMajor = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION.substringBefore('.').toInt()
+
+if (agpMajor < 9) {
+    apply(plugin = "org.jetbrains.kotlin.android")
 }
 
 android {
-    namespace = "com.example.edge_ai"
+    namespace = "com.manukj.edge_gen_ai"
 
     compileSdk = 36
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     sourceSets {
@@ -78,6 +79,12 @@ android {
                 }
             }
         }
+    }
+}
+
+project.extensions.configure(org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension::class.java) {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 

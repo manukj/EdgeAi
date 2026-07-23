@@ -1,22 +1,24 @@
 ## 0.2.0
 
-* Tool (function) calling: pass `EdgeGenAITool`s to `EdgeGenAIPrompt` and
-  the model can call back into your Dart code while generating. Uses
-  Foundation Models' native `Tool` protocol on iOS; emulated with
-  prompting on Android (experimental — ML Kit's Prompt API has no native
-  support, so the small on-device model may answer directly instead of
-  calling a tool, and the final answer arrives as a single event rather
-  than streaming).
-* `EdgeGenAIToolSchema`: rich tool-argument schemas — string enums,
-  numeric ranges, arrays with item schemas and length bounds, and nested
-  objects — matching what Foundation Models' `DynamicGenerationSchema`
-  enforces natively on iOS. Schemas cross the platform boundary as JSON
-  Schema text, which Android embeds directly in the tool-calling prompt.
+* Adds Swift Package Manager support for iOS (in addition to CocoaPods).
+* Migrates the Android build to built-in Kotlin on Android Gradle Plugin
+  9+, while still applying the `kotlin-android` plugin on older AGP
+  versions, so the minimum supported Flutter/Dart version is unchanged.
+* Adds tool (function) calling through `EdgeGenAITool`.
+  iOS uses Foundation Models' native tool support; Android emulates tool
+  calls because ML Kit GenAI does not support them natively.
+
+## 0.1.1
+
+* Fix README screenshots not rendering on pub.dev by using absolute GitHub
+  raw URLs instead of relative paths.
 
 ## 0.1.0
 
 **Breaking changes**
 
+* Renamed the package from `edge_ai` to `edge_gen_ai`. Update your
+  dependency and imports (e.g. `package:edge_gen_ai/edge_gen_ai.dart`).
 * Renamed the public API from the `EdgeAi` prefix to `EdgeGenAI`:
   * `EdgeAi` is now `EdgeGenAIPrompt`.
   * `EdgeAiAvailability`, `EdgeAiDownloadProgress`, `EdgeAiDownloadStatus`,

@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:battery_plus/battery_plus.dart';
-import 'package:edge_ai/edge_ai.dart';
+import 'package:edge_gen_ai/edge_gen_ai.dart';
 import 'package:flutter/material.dart';
 
 /// Demonstrates theme-changing tools with no, optional, and explicit arguments.

@@ -1,7 +1,7 @@
 PODS:
   - battery_plus (1.0.0):
     - Flutter
-  - edge_ai (0.0.1):
+  - edge_gen_ai (0.0.1):
     - Flutter
   - Flutter (1.0.0)
   - image_picker_ios (0.0.1):
@@ -11,7 +11,7 @@ PODS:
 
 DEPENDENCIES:
   - battery_plus (from `.symlinks/plugins/battery_plus/ios`)
-  - edge_ai (from `.symlinks/plugins/edge_ai/ios`)
+  - edge_gen_ai (from `.symlinks/plugins/edge_gen_ai/ios`)
   - Flutter (from `Flutter`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - integration_test (from `.symlinks/plugins/integration_test/ios`)
@@ -19,8 +19,8 @@ DEPENDENCIES:
 EXTERNAL SOURCES:
   battery_plus:
     :path: ".symlinks/plugins/battery_plus/ios"
-  edge_ai:
-    :path: ".symlinks/plugins/edge_ai/ios"
+  edge_gen_ai:
+    :path: ".symlinks/plugins/edge_gen_ai/ios"
   Flutter:
     :path: Flutter
   image_picker_ios:
@@ -30,7 +30,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   battery_plus: b42253f6d2dde71712f8c36fef456d99121c5977
-  edge_ai: eb9adc68c0e7f80509c7bf671855fcf6f0142621
+  edge_gen_ai: 4475ea01e8aa0f7a5da96eee966577aa3edf61a0
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   image_picker_ios: e0ece4aa2a75771a7de3fa735d26d90817041326
   integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e

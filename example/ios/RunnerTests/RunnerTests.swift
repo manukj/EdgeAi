@@ -3,7 +3,7 @@ import UIKit
 import XCTest
 
 
-@testable import edge_ai
+@testable import edge_gen_ai
 
 // This demonstrates a simple unit test of the Swift portion of this plugin's implementation.
 //

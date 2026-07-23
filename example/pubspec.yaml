@@ -1,5 +1,5 @@
 name: edge_ai_example
-description: "Demonstrates how to use the edge_ai plugin."
+description: "Demonstrates how to use the edge_gen_ai plugin."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -17,9 +17,9 @@ dependencies:
   flutter:
     sdk: flutter
 
-  edge_ai:
+  edge_gen_ai:
     # When depending on this package from a real application you should use:
-    #   edge_ai: ^x.y.z
+    #   edge_gen_ai: ^x.y.z
     # See https://dart.dev/tools/pub/dependencies#version-constraints
     # The example app is bundled with the plugin so we use a path dependency on
     # the parent directory to use the current plugin's version.
@@ -31,6 +31,7 @@ dependencies:
 
   # Used by the example app's image description demo to pick a photo.
   image_picker: ^1.1.2
+  flutter_markdown_plus: ^1.0.12
 
   # Used by the function-calling demo to read the device's battery level.
   battery_plus: ^7.1.1

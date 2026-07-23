@@ -1,8 +1,9 @@
 import 'dart:async';
 
-import 'package:edge_ai/edge_ai.dart';
+import 'package:edge_gen_ai/edge_gen_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'function_calling_page.dart';
@@ -13,6 +14,36 @@ void main() {
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  static ThemeData _theme(Brightness brightness, Color seedColor) {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: seedColor,
+      brightness: brightness,
+    );
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      appBarTheme: AppBarTheme(
+        centerTitle: false,
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        scrolledUnderElevation: 1,
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: colorScheme.surfaceContainerHighest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: colorScheme.surfaceContainerHighest,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -34,23 +65,19 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'EdgeGenAi',
       themeMode: _themeMode,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: _themeColor,
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: _themeColor,
-        brightness: Brightness.dark,
-      ),
+      theme: MyApp._theme(Brightness.light, _themeColor),
+      darkTheme: MyApp._theme(Brightness.dark, _themeColor),
       home: DefaultTabController(
         length: 6,
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('EdgeGenAi'),
+            title: const Text(
+              'EdgeGenAi',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
             bottom: const TabBar(
               isScrollable: true,
+              tabAlignment: TabAlignment.start,
               tabs: [
                 Tab(icon: Icon(Icons.chat_bubble_outline), text: 'Chat'),
                 Tab(icon: Icon(Icons.call_outlined), text: 'Function calling'),
@@ -88,8 +115,33 @@ class _ResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: EdgeInsets.zero,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Padding(padding: const EdgeInsets.all(16), child: Text(text)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.auto_awesome,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Result',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            MarkdownBody(data: text),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -184,6 +236,7 @@ class _ChatPageState extends State<ChatPage>
     final prompt = _promptController.text;
     if (prompt.trim().isEmpty) return;
     final image = _pendingImage;
+    FocusManager.instance.primaryFocus?.unfocus();
 
     final modelMessage = _ChatMessage(isUser: false, text: '');
     setState(() {
@@ -235,10 +288,17 @@ class _ChatPageState extends State<ChatPage>
   Widget build(BuildContext context) {
     super.build(context);
     final canDownload = _availability == EdgeGenAIAvailability.downloadable;
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            border: Border(
+              bottom: BorderSide(color: colorScheme.outlineVariant),
+            ),
+          ),
           child: Row(
             children: [
               Icon(
@@ -249,7 +309,7 @@ class _ChatPageState extends State<ChatPage>
                   _ => Icons.error_outline,
                 },
                 size: 18,
-                color: Theme.of(context).colorScheme.secondary,
+                color: colorScheme.secondary,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -265,7 +325,14 @@ class _ChatPageState extends State<ChatPage>
                   onPressed: _downloadModel,
                   child: const Text('Download'),
                 ),
-              const Icon(Icons.memory, size: 18),
+              Tooltip(
+                message: 'Conversation memory',
+                child: Icon(
+                  Icons.memory,
+                  size: 18,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
               Switch(value: _prompt.useMemory, onChanged: _setUseMemory),
               IconButton(
                 onPressed: _messages.isEmpty ? null : _resetConversation,
@@ -278,17 +345,28 @@ class _ChatPageState extends State<ChatPage>
         Expanded(
           child: _messages.isEmpty
               ? Center(
-                  child: Text(
-                    'Say hello to get started.',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.chat_bubble_outline,
+                        size: 40,
+                        color: colorScheme.outline,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Say hello to get started.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.outline,
+                        ),
+                      ),
+                    ],
                   ),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 8,
+                    vertical: 12,
                   ),
                   itemCount: _messages.length,
                   itemBuilder: (context, index) {
@@ -297,38 +375,50 @@ class _ChatPageState extends State<ChatPage>
                       alignment: message.isUser
                           ? Alignment.centerRight
                           : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.78,
                         ),
-                        decoration: BoxDecoration(
-                          color: message.isUser
-                              ? Theme.of(context).colorScheme.primaryContainer
-                              : Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (message.image != null)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.memory(
-                                    message.image!,
-                                    height: 150,
-                                    fit: BoxFit.cover,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: message.isUser
+                                ? colorScheme.primaryContainer
+                                : colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(18),
+                              topRight: const Radius.circular(18),
+                              bottomLeft: Radius.circular(
+                                message.isUser ? 18 : 4,
+                              ),
+                              bottomRight: Radius.circular(
+                                message.isUser ? 4 : 18,
+                              ),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (message.image != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: Image.memory(
+                                      message.image!,
+                                      height: 150,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            Text(message.text),
-                          ],
+                              MarkdownBody(data: message.text),
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -347,7 +437,7 @@ class _ChatPageState extends State<ChatPage>
                     child: Stack(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                           child: Image.memory(
                             _pendingImage!,
                             height: 80,
@@ -355,12 +445,21 @@ class _ChatPageState extends State<ChatPage>
                           ),
                         ),
                         Positioned(
-                          top: 0,
-                          right: 0,
-                          child: IconButton(
-                            icon: const Icon(Icons.cancel, size: 18),
-                            onPressed: () =>
-                                setState(() => _pendingImage = null),
+                          top: 2,
+                          right: 2,
+                          child: CircleAvatar(
+                            radius: 12,
+                            backgroundColor: Colors.black54,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              iconSize: 16,
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.white,
+                              ),
+                              onPressed: () =>
+                                  setState(() => _pendingImage = null),
+                            ),
                           ),
                         ),
                       ],
@@ -376,9 +475,11 @@ class _ChatPageState extends State<ChatPage>
                     Expanded(
                       child: TextField(
                         controller: _promptController,
+                        minLines: 1,
+                        maxLines: 5,
+                        textCapitalization: TextCapitalization.sentences,
                         decoration: InputDecoration(
                           hintText: 'Message',
-                          filled: true,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 12,
