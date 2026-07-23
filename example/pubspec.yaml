@@ -32,6 +32,9 @@ dependencies:
   # Used by the example app's image description demo to pick a photo.
   image_picker: ^1.1.2
 
+  # Used by the function-calling demo to read the device's battery level.
+  battery_plus: ^7.1.1
+
 dev_dependencies:
   integration_test:
     sdk: flutter

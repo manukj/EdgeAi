@@ -5,20 +5,47 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'function_calling_page.dart';
+
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+  Color _themeColor = Colors.indigo;
+
+  void _setTheme({required ThemeMode mode, required Color color}) {
+    setState(() {
+      _themeMode = mode;
+      _themeColor = color;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'EdgeGenAi',
-      theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
+      themeMode: _themeMode,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: _themeColor,
+        brightness: Brightness.light,
+      ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: _themeColor,
+        brightness: Brightness.dark,
+      ),
       home: DefaultTabController(
-        length: 5,
+        length: 6,
         child: Scaffold(
           appBar: AppBar(
             title: const Text('EdgeGenAi'),
@@ -26,6 +53,7 @@ class MyApp extends StatelessWidget {
               isScrollable: true,
               tabs: [
                 Tab(icon: Icon(Icons.chat_bubble_outline), text: 'Chat'),
+                Tab(icon: Icon(Icons.call_outlined), text: 'Function calling'),
                 Tab(icon: Icon(Icons.summarize_outlined), text: 'Summarize'),
                 Tab(icon: Icon(Icons.spellcheck), text: 'Proofread'),
                 Tab(icon: Icon(Icons.auto_fix_high), text: 'Rewrite'),
@@ -33,13 +61,14 @@ class MyApp extends StatelessWidget {
               ],
             ),
           ),
-          body: const TabBarView(
+          body: TabBarView(
             children: [
-              ChatPage(),
-              SummarizePage(),
-              ProofreadPage(),
-              RewritePage(),
-              ImageDescriptionPage(),
+              const ChatPage(),
+              FunctionCallingPage(onThemeChanged: _setTheme),
+              const SummarizePage(),
+              const ProofreadPage(),
+              const RewritePage(),
+              const ImageDescriptionPage(),
             ],
           ),
         ),
@@ -90,25 +119,12 @@ class _ChatPageState extends State<ChatPage>
   bool _isGenerating = false;
   var _prompt = _buildPrompt(useMemory: true);
 
-  /// Builds the chat's prompt instance. The demo tool lets prompts like
-  /// "What time is it right now?" work: the model calls back into this
-  /// Dart function during generation.
+  /// Builds a chat prompt with the selected memory behavior.
   static EdgeGenAIPrompt _buildPrompt({required bool useMemory}) {
-    return EdgeGenAIPrompt(
-      useMemory: useMemory,
-      tools: [
-        EdgeGenAITool(
-          name: 'get_current_time',
-          description: 'Gets the current date and time.',
-          onCall: (_) async => DateTime.now().toString(),
-        ),
-      ],
-    );
+    return EdgeGenAIPrompt(useMemory: useMemory);
   }
 
-  final _promptController = TextEditingController(
-    text: 'Write a 3 sentence story about a magical dog.',
-  );
+  final _promptController = TextEditingController();
   Uint8List? _pendingImage;
 
   @override
@@ -441,6 +457,175 @@ class _TextToolPageState extends State<_TextToolPage>
     String result;
     try {
       result = await widget.action(text);
+      /*
+
+  /// Demonstrates the ways a tool can receive arguments from the model.
+  class FunctionCallingPage extends StatefulWidget {
+    const FunctionCallingPage({super.key});
+
+    @override
+    State<FunctionCallingPage> createState() => _FunctionCallingPageState();
+  }
+
+  class _FunctionCallingPageState extends State<FunctionCallingPage>
+      with AutomaticKeepAliveClientMixin {
+    late final EdgeGenAIPrompt _prompt = EdgeGenAIPrompt(
+      tools: [
+        EdgeGenAITool(
+          name: 'get_battery_percentage',
+          description: 'Gets the current device battery percentage.',
+          onCall: (_) async => '${await Battery().batteryLevel}%',
+        ),
+        EdgeGenAITool(
+          name: 'get_device_status',
+          description:
+              'Gets the default device status. Both parameters are optional '
+              'and default to false when omitted.',
+          parameters: [
+            EdgeGenAIToolParameter(
+              name: 'includeBattery',
+              description: 'Whether to include the battery percentage.',
+              type: EdgeGenAIToolParameterType.boolean,
+              isRequired: false,
+            ),
+            EdgeGenAIToolParameter(
+              name: 'verbose',
+              description: 'Whether to include extra status detail.',
+              type: EdgeGenAIToolParameterType.boolean,
+              isRequired: false,
+            ),
+          ],
+          onCall: _getDeviceStatus,
+        ),
+        EdgeGenAITool(
+          name: 'create_reminder',
+          description: 'Creates a reminder after a specified number of minutes.',
+          parameters: [
+            EdgeGenAIToolParameter(
+              name: 'title',
+              description: 'What the reminder is about.',
+            ),
+            EdgeGenAIToolParameter(
+              name: 'minutesFromNow',
+              description: 'How many minutes from now it should fire.',
+              type: EdgeGenAIToolParameterType.integer,
+            ),
+          ],
+          onCall: _createReminder,
+        ),
+      ],
+    );
+    final _controller = TextEditingController();
+    String? _result;
+    bool _isGenerating = false;
+
+    @override
+    bool get wantKeepAlive => true;
+
+    @override
+    void dispose() {
+      _controller.dispose();
+      super.dispose();
+    }
+
+    static Future<String> _getDeviceStatus(
+      Map<String, Object?> arguments,
+    ) async {
+      final includeBattery = arguments['includeBattery'] as bool? ?? false;
+      final verbose = arguments['verbose'] as bool? ?? false;
+      final details = <String>['Device is ready.'];
+      if (includeBattery) details.add('Battery: ${await Battery().batteryLevel}%');
+      if (verbose) details.add('Using default status checks.');
+      return details.join(' ');
+    }
+
+    static Future<String> _createReminder(
+      Map<String, Object?> arguments,
+    ) async {
+      final title = arguments['title'] as String? ?? 'Untitled reminder';
+      final minutes = arguments['minutesFromNow'] as int? ?? 0;
+      return 'Reminder "$title" created for $minutes minutes from now.';
+    }
+
+    void _useExample(String prompt) {
+      setState(() => _controller.text = prompt);
+    }
+
+    void _generate() {
+      final prompt = _controller.text.trim();
+      if (prompt.isEmpty) return;
+      setState(() {
+        _isGenerating = true;
+        _result = null;
+      });
+      _prompt.generateContent(prompt).listen(
+        (chunk) {
+          if (!mounted) return;
+          setState(() => _result = chunk);
+        },
+        onError: (Object error) {
+          if (!mounted) return;
+          setState(() {
+            _isGenerating = false;
+            _result = 'Failed to generate content: $error';
+          });
+        },
+        onDone: () {
+          if (!mounted) return;
+          setState(() => _isGenerating = false);
+        },
+      );
+    }
+
+    @override
+    Widget build(BuildContext context) {
+      super.build(context);
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Choose an example, then ask the model to run it.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            _FunctionExample(
+              title: 'No parameters, no arguments',
+              detail: 'get_battery_percentage() returns the battery level.',
+              prompt: 'What is my battery percentage?',
+              onTap: _useExample,
+            ),
+            const SizedBox(height: 8),
+            _FunctionExample(
+              title: 'Few parameters, no arguments',
+              detail: 'get_device_status has two optional values and uses defaults.',
+              prompt: 'Give me the default device status.',
+              onTap: _useExample,
+            ),
+            const SizedBox(height: 8),
+            _FunctionExample(
+              title: 'Few parameters, few arguments',
+              detail: 'create_reminder receives a title and a number of minutes.',
+              prompt: 'Remind me to stretch in 15 minutes.',
+              onTap: _useExample,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _controller,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Prompt',
+                border: OutlineInputBorder(),
+              ),
+              onSubmitted: (_) => _generate(),
+            ),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: _isGenerating ? null : _generate,
+              icon: _isGenerating
+                  ? const SizedBox(
+      */
     } catch (error) {
       result = 'Failed: $error';
     }
@@ -454,6 +639,36 @@ class _TextToolPageState extends State<_TextToolPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    /*
+  }
+
+  class _FunctionExample extends StatelessWidget {
+    const _FunctionExample({
+      required this.title,
+      required this.detail,
+      required this.prompt,
+      required this.onTap,
+    });
+
+    final String title;
+    final String detail;
+    final String prompt;
+    final ValueChanged<String> onTap;
+
+    @override
+    Widget build(BuildContext context) {
+      return ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        tileColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        title: Text(title),
+        subtitle: Text(detail),
+        trailing: const Icon(Icons.arrow_forward),
+        onTap: () => onTap(prompt),
+      );
+    }
+  */
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(

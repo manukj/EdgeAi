@@ -101,8 +101,8 @@ import Foundation
 
     func call(arguments: GeneratedContent) async throws -> String {
       let argumentsJson = arguments.jsonString
-      // Pigeon channels must be used from the platform (main) thread, while
-      // the model invokes tools from its own concurrency context.
+
+
       return try await withCheckedThrowingContinuation { continuation in
         DispatchQueue.main.async {
           self.toolExecutorApi.callTool(

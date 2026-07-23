@@ -54,15 +54,13 @@ Xcode 27+; on earlier OS/SDK versions the image features report unavailable.
 
 ### Tool (function) calling
 
-Give an `EdgeGenAIPrompt` instance a list of `EdgeGenAITool`s and the model
-can call back into your Dart code while generating. Tools are fixed per
-instance (not per call) because iOS binds them to the native session that
-carries the conversation. On iOS this uses Foundation Models' native `Tool`
-protocol; on Android it's emulated with prompting (see the note below) —
-the model is asked to reply with a tool-call JSON object, the plugin runs
-your Dart function, feeds the result back, and returns the final answer.
-On Android the final answer arrives as a single event rather than
-streaming, since intermediate rounds are tool-call JSON.
+Add `EdgeGenAITool`s to an `EdgeGenAIPrompt`. When the model uses a tool,
+the plugin runs your Dart callback and gives its result back to the model.
+
+> **Important:** Function calling is native on iOS through Foundation Models.
+> Android ML Kit does not natively support function calling. On Android, this
+> plugin emulates a function call with JSON, so the model may answer directly
+> instead of calling your function.
 
 ```dart
 final assistant = EdgeGenAIPrompt(
@@ -90,49 +88,6 @@ await for (final chunk in assistant.generateContent(
 }
 ```
 
-Beyond plain typed parameters, `EdgeGenAIToolSchema` describes richer
-argument shapes — string enums, numeric ranges, arrays with length bounds,
-and nested objects — mirroring what Foundation Models'
-`DynamicGenerationSchema` can *enforce natively* on iOS (the model
-literally cannot produce arguments outside the schema there). On Android
-the same schema is embedded in the prompt as JSON Schema text for the
-model to follow:
-
-```dart
-EdgeGenAITool(
-  name: 'create_reminder',
-  description: 'Creates a reminder.',
-  parameters: [
-    EdgeGenAIToolParameter(
-      name: 'title',
-      description: 'The reminder title.',
-    ),
-    EdgeGenAIToolParameter(
-      name: 'priority',
-      description: 'How urgent the reminder is.',
-      schema: EdgeGenAIToolSchema.string(
-        enumValues: ['low', 'medium', 'high'],
-      ),
-      isRequired: false,
-    ),
-    EdgeGenAIToolParameter(
-      name: 'minutesFromNow',
-      description: 'When the reminder should fire.',
-      schema: EdgeGenAIToolSchema.integer(minimum: 1, maximum: 1440),
-    ),
-    EdgeGenAIToolParameter(
-      name: 'tags',
-      description: 'Labels for the reminder.',
-      schema: EdgeGenAIToolSchema.array(
-        items: EdgeGenAIToolSchema.string(),
-        maxItems: 5,
-      ),
-      isRequired: false,
-    ),
-  ],
-  onCall: (arguments) async => createReminder(arguments),
-)
-```
 
 ## Beta / stability notes
 
@@ -146,19 +101,6 @@ EdgeGenAITool(
   `GenerationOptions`) are stable; image input additionally uses
   `Attachment`, which is iOS 27+ and still marked Beta by Apple.
   See [Foundation Models](https://developer.apple.com/documentation/foundationmodels).
-- **Tool calling on Android is emulated, and best-effort.** Apple's
-  Foundation Models supports tool calling natively via the `Tool`
-  protocol, and that's what iOS uses. Google's ML Kit GenAI Prompt API
-  (Gemini Nano) has no native support — confirmed by direct testing,
-  including with Google's
-  [Agent Development Kit](https://developer.android.com/ai/adk), which
-  correctly sends a tool schema to the model but the model never
-  actually invokes it. On Android this plugin therefore *emulates* tool
-  calling by instructing the model to reply with a tool-call JSON object
-  and looping tool results back into the prompt; the small on-device
-  model may still answer directly instead of calling a tool, so treat
-  Android tool calling as experimental.
-
 ## Platform requirements
 
 - **iOS**: iOS 26+ with Apple Intelligence enabled in Settings (iOS 27+
